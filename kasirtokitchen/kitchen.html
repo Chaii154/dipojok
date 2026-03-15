@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dapur">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-kitchen.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍳 DAPUR — DiPojok</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E8192C;--rd:#b01020;--wh:#FFF;--bk:#0A0A0A;--g1:#0e0e0e;--g2:#161616;--g3:#1f1f1f;--br:rgba(255,255,255,0.08);--gn:#25D366;--or:#FF8C00;--yw:#FFD600;--bl:#3B82F6;--tx:rgba(255,255,255,0.9);--mt:rgba(255,255,255,0.4);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Montserrat',sans-serif;background:var(--bk);color:var(--tx);min-height:100vh;}
+
+/* MODE BAR */
+.mbar{background:#0a0a0a;border-bottom:2px solid var(--br);padding:0 16px;height:42px;display:flex;align-items:center;gap:7px;flex-wrap:nowrap;overflow-x:auto;}
+.mlbl{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--mt);flex-shrink:0;}
+.mbtn{padding:4px 10px;border-radius:3px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1px solid;flex-shrink:0;white-space:nowrap;}
+.mbtn.lh{background:rgba(37,211,102,.1);color:var(--gn);border-color:rgba(37,211,102,.35);}
+.mbtn.lh.on{background:var(--gn);color:#000;}
+.mbtn.fb{background:rgba(255,160,0,.1);color:#ffb300;border-color:rgba(255,160,0,.35);}
+.mbtn.fb.on{background:#ffb300;color:#000;}
+.mbtn.ls{background:rgba(59,130,246,.1);color:var(--bl);border-color:rgba(59,130,246,.35);}
+.mbtn.ls.on{background:var(--bl);color:#fff;}
+.mbtn.rst{background:rgba(232,25,44,.1);color:var(--red);border-color:rgba(232,25,44,.35);}
+.mbtn.rst:hover{background:var(--red);color:#fff;}
+.mst{font-size:10px;font-weight:700;padding:3px 9px;border-radius:3px;margin-left:auto;flex-shrink:0;white-space:nowrap;}
+.mst.ok{background:rgba(37,211,102,.15);color:var(--gn);}
+.mst.er{background:rgba(232,25,44,.15);color:var(--red);}
+.mst.ld{background:rgba(255,140,0,.15);color:var(--or);}
+
+/* TOPBAR */
+.topbar{background:var(--g1);border-bottom:2px solid var(--or);padding:0 16px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.brand{display:flex;align-items:center;gap:10px;}
+.bi{font-size:26px;}
+.bn{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;}
+.bn span{color:var(--or);}
+.bs{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--mt);}
+.badge{background:var(--or);color:#000;font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:4px 11px;border-radius:2px;}
+.tr{display:flex;align-items:center;gap:10px;}
+.clk{font-family:'Bebas Neue',sans-serif;font-size:25px;letter-spacing:2px;color:var(--or);}
+.alink{padding:7px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none;border-radius:2px;border:1px solid;transition:all .2s;background:rgba(232,25,44,.12);color:var(--red);border-color:rgba(232,25,44,.3);}
+.alink:hover{background:var(--red);color:#fff;}
+
+/* QUEUE BAR */
+.qbar{background:var(--g1);border-bottom:1px solid var(--br);padding:9px 16px;display:flex;gap:18px;align-items:center;overflow-x:auto;}
+.qs{text-align:center;flex-shrink:0;}
+.qv{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1px;line-height:1;}
+.qv.p{color:var(--red);}
+.qv.c{color:var(--or);}
+.qv.d{color:var(--gn);}
+.ql{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mt);margin-top:1px;}
+.qd{width:1px;height:40px;background:var(--br);flex-shrink:0;}
+.qtip{flex:1;font-size:11px;color:var(--mt);letter-spacing:.5px;padding-left:8px;line-height:1.6;}
+
+/* FLASH */
+.flash{position:fixed;top:76px;left:50%;transform:translateX(-50%) translateY(-14px);padding:13px 26px;border-radius:4px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;z-index:800;opacity:0;pointer-events:none;transition:all .35s cubic-bezier(.16,1,.3,1);white-space:nowrap;max-width:92vw;text-align:center;}
+.flash.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.flash.or{background:var(--or);color:#000;box-shadow:0 8px 28px rgba(255,140,0,.6);}
+.flash.gn{background:var(--gn);color:#000;box-shadow:0 8px 28px rgba(37,211,102,.55);}
+.flash.rd{background:var(--red);color:#fff;box-shadow:0 8px 28px rgba(232,25,44,.6);}
+
+/* MAIN */
+.km{padding:14px 16px;}
+.sh{display:flex;align-items:center;margin-bottom:10px;}
+.st{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:2px;}
+.st .r{color:var(--red);}
+.st .o{color:var(--or);}
+.st .g{color:var(--gn);}
+.og{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:14px;margin-bottom:22px;}
+
+/* CARD */
+.oc{background:var(--g2);border-radius:6px;overflow:hidden;transition:border-color .3s,box-shadow .3s;animation:si .42s cubic-bezier(.16,1,.3,1) both;position:relative;}
+@keyframes si{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.oc.pending{border:2px solid var(--red);box-shadow:0 0 14px rgba(232,25,44,.12);}
+.oc.cooking{border:2px solid var(--or);}
+.oc.cooking.pulsing{animation:si .42s both,po 2s ease-in-out infinite;}
+@keyframes po{0%,100%{box-shadow:0 0 20px rgba(255,140,0,.18)}50%{box-shadow:0 0 34px rgba(255,140,0,.36)}}
+.oc.done{border:2px solid var(--gn);opacity:.58;}
+
+.nb{position:absolute;top:9px;right:9px;background:var(--red);color:#fff;font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:3px 8px;border-radius:2px;animation:bl 1s ease-in-out infinite;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.32}}
+
+.ch{padding:12px 14px 10px;background:var(--g3);display:flex;align-items:center;justify-content:space-between;}
+.cid{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;color:var(--gn);}
+.ctbl{font-family:'Bebas Neue',sans-serif;font-size:27px;letter-spacing:1px;color:var(--wh);line-height:1;}
+.ctm{font-size:10px;color:var(--mt);margin-top:2px;}
+.ccu{font-size:10px;color:var(--or);font-weight:600;}
+.tmr{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;padding:5px 10px;border-radius:4px;min-width:60px;text-align:center;}
+.tmr.p{background:rgba(232,25,44,.18);color:var(--red);}
+.tmr.c{background:rgba(255,140,0,.18);color:var(--or);}
+.tmr.d{background:rgba(37,211,102,.13);color:var(--gn);font-size:13px;}
+
+.cb{padding:12px 14px 6px;}
+.cnote{background:rgba(255,214,0,.07);border-left:3px solid var(--yw);padding:7px 10px;border-radius:2px;font-size:11px;color:var(--yw);font-weight:600;margin-bottom:10px;}
+
+/* ── ITEM LIST with per-item check ── */
+.ci{list-style:none;margin-bottom:8px;}
+.ci li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--br);transition:all .2s;}
+.ci li:last-child{border-bottom:none;}
+.ci li.item-done{opacity:.4;}
+.ci li.item-done .in{text-decoration:line-through;}
+.iq{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--or);min-width:32px;line-height:1;flex-shrink:0;}
+.in{font-size:14px;font-weight:700;color:var(--wh);flex:1;}
+
+/* Big tap-friendly checkbox */
+.ick{
+  width:36px;height:36px;
+  border:2px solid rgba(37,211,102,.35);
+  border-radius:8px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  transition:all .18s;
+  flex-shrink:0;
+  background:rgba(37,211,102,.05);
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.ick:hover,.ick:active{border-color:var(--gn);background:rgba(37,211,102,.15);}
+.ick.chk{background:var(--gn);border-color:var(--gn);color:#000;}
+.ick.chk::after{content:'✓';}
+.ick:not(.chk)::after{content:'';}
+
+/* Progress bar */
+.progress-bar{height:4px;background:var(--br);margin:0 14px 0;}
+.progress-fill{height:100%;background:var(--gn);border-radius:2px;transition:width .3s ease;}
+
+/* FOOTER BUTTONS */
+.cf{padding:10px 14px 13px;display:flex;flex-direction:column;gap:7px;}
+
+.btn-mulai{width:100%;padding:14px;background:rgba(255,140,0,.13);color:var(--or);border:1.5px solid rgba(255,140,0,.36);border-radius:4px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.btn-mulai:hover,.btn-mulai:active{background:var(--or);color:#000;}
+
+/* Sajikan row: partial button + print button */
+.sajikan-row{display:flex;gap:7px;}
+
+.btn-sajikan{
+  flex:1;padding:14px 10px;
+  background:rgba(37,211,102,.12);color:var(--gn);
+  border:1.5px solid rgba(37,211,102,.36);
+  border-radius:4px;
+  font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;
+  cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-sajikan:hover,.btn-sajikan:active{background:var(--gn);color:#000;}
+.btn-sajikan:disabled{opacity:.3;cursor:not-allowed;}
+.btn-sajikan .saj-count{background:rgba(255,255,255,.25);color:inherit;font-size:12px;padding:1px 7px;border-radius:10px;font-family:'Montserrat',sans-serif;font-weight:700;}
+
+.btn-sajikan-all{
+  flex:1;padding:14px 10px;
+  background:var(--gn);color:#000;
+  border:none;border-radius:4px;
+  font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;
+  cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:0 4px 16px rgba(37,211,102,.3);
+}
+.btn-sajikan-all:hover,.btn-sajikan-all:active{background:#1db954;transform:scale(1.02);}
+
+.bp{padding:13px 12px;background:rgba(59,130,246,.12);color:#60a5fa;border:1.5px solid rgba(59,130,246,.3);border-radius:4px;font-family:'Bebas Neue',sans-serif;font-size:16px;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.bp:hover,.bp:active{background:var(--bl);color:#fff;}
+
+.bdl{width:100%;padding:13px;background:rgba(37,211,102,.05);color:rgba(37,211,102,.42);border:1px solid rgba(37,211,102,.12);border-radius:4px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:default;text-align:center;}
+
+/* PARTIAL DONE INDICATOR on card header */
+.partial-badge{background:rgba(37,211,102,.2);color:var(--gn);font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:10px;margin-top:3px;display:inline-block;}
+.bell-unlock{position:fixed;bottom:18px;right:18px;z-index:900;background:var(--or);color:#000;border:none;border-radius:50%;width:54px;height:54px;font-size:24px;cursor:pointer;box-shadow:0 4px 18px rgba(255,140,0,.6);display:flex;align-items:center;justify-content:center;animation:bellpulse 1.4s infinite;}
+@keyframes bellpulse{0%,100%{transform:scale(1);}50%{transform:scale(1.13);}}
+.bell-unlock.unlocked{background:var(--gn);animation:none;box-shadow:0 2px 8px rgba(37,211,102,.4);}
+
+
+.ek{text-align:center;padding:66px 24px;color:var(--mt);}
+.ei{font-size:64px;margin-bottom:12px;opacity:.26;}
+.et{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;margin-bottom:6px;}
+.es{font-size:12px;letter-spacing:1px;}
+
+/* PRINT MODAL */
+.mover{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:20px;}
+.mover.open{display:flex;}
+.mbox{background:var(--g2);border:1px solid var(--br);border-radius:6px;padding:22px;max-width:450px;width:100%;max-height:90vh;overflow-y:auto;}
+.mtit{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;margin-bottom:3px;}
+.msub{font-size:11px;color:var(--mt);margin-bottom:14px;letter-spacing:1px;}
+.stabs{display:flex;gap:6px;margin-bottom:13px;}
+.stab{flex:1;padding:9px;border-radius:4px;border:1.5px solid var(--br);background:transparent;color:var(--mt);font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;text-align:center;}
+.stab.on{background:var(--or);border-color:var(--or);color:#000;}
+.spaper{background:#fff;color:#000;border-radius:4px;margin-bottom:13px;}
+.sprev{padding:15px;font-family:'Courier New',monospace;font-size:12px;}
+.macts{display:flex;gap:7px;flex-wrap:wrap;}
+.bprt{flex:1;min-width:90px;padding:11px;background:var(--or);color:#000;border:none;border-radius:3px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:all .2s;}
+.bprt:hover{background:#e67e00;}
+.bcm{padding:11px 14px;background:transparent;color:var(--mt);border:1px solid var(--br);border-radius:3px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;transition:all .18s;}
+.bcm:hover{border-color:rgba(255,255,255,.25);color:var(--wh);}
+
+/* RESET CONFIRM */
+.rmover{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:700;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);}
+.rmover.open{display:flex;}
+.rmbox{background:var(--g2);border:2px solid var(--red);border-radius:6px;padding:28px;max-width:400px;width:90%;text-align:center;}
+.rmtit{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--red);margin-bottom:8px;}
+.rmsub{font-size:12px;color:var(--mt);margin-bottom:20px;line-height:1.6;}
+.rmacts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.btn-rc{padding:13px 24px;background:var(--red);color:#fff;border:none;border-radius:3px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;transition:all .2s;}
+.btn-rc:hover{background:var(--rd);}
+.btn-rx{padding:13px 24px;background:transparent;color:var(--mt);border:1px solid var(--br);border-radius:3px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:all .18s;}
+.btn-rx:hover{border-color:rgba(255,255,255,.2);color:var(--wh);}
+
+/* STRUK CSS */
+.sp .sc{text-align:center;margin-bottom:4px;}
+.sp .slo{font-size:17px;font-weight:900;letter-spacing:2px;}
+.sp .ssu{font-size:9px;letter-spacing:2px;color:#666;}
+.sp .shr{border-top:2px solid #000;margin:6px 0;}
+.sp .srw{display:flex;justify-content:space-between;font-size:11px;margin:2px 0;}
+.sp .slb{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;}
+.sp .sbg{font-size:20px;font-weight:900;}
+.sp .sit{padding:5px 0;border-bottom:1px dashed #ddd;}
+.sp .siq{font-size:20px;font-weight:900;}
+.sp .snm{font-size:12px;font-weight:700;}
+.sp .snt{background:#fffbe6;border-left:3px solid #ffc800;padding:5px 8px;margin:5px 0;font-size:11px;font-weight:bold;}
+.sp .sto{font-size:15px;font-weight:900;}
+.sp .sft{font-size:9px;color:#888;text-align:center;margin-top:6px;}
+
+/* PRINT */
+#PA{display:none;}
+@media print{
+  body>*:not(#PA){display:none!important;}
+  #PA{display:block!important;position:fixed;inset:0;background:#fff;padding:10px 14px;font-family:'Courier New',monospace;font-size:12px;max-width:300px;margin:0 auto;color:#000;}
+  .sc{text-align:center;}.slo{font-size:17px;font-weight:900;letter-spacing:2px;}.ssu{font-size:9px;color:#666;}
+  .shr{border-top:2px solid #000;margin:6px 0;}
+  .srw{display:flex;justify-content:space-between;font-size:11px;margin:2px 0;}
+  .slb{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;}
+  .sbg{font-size:20px;font-weight:900;}.sit{padding:5px 0;border-bottom:1px dashed #ddd;}
+  .siq{font-size:20px;font-weight:900;}.snm{font-size:12px;font-weight:700;}
+  .snt{background:#fffbe6;border-left:3px solid #ffc800;padding:5px 8px;margin:5px 0;font-size:11px;font-weight:bold;}
+  .sto{font-size:15px;font-weight:900;}.sft{font-size:9px;color:#888;text-align:center;margin-top:6px;}
+}
+
+@media(max-width:600px){
+  .km{padding:10px;}
+  .qbar{padding:7px 10px;gap:12px;}
+  .qv{font-size:26px;}
+  .topbar{padding:0 10px;height:52px;}
+  .clk{font-size:22px;}
+  .macts,.rmacts{flex-direction:column;}
+  .ick{width:44px;height:44px;font-size:22px;}
+}
+
+/* PWA Install Banner */
+#pwa-banner{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#0d1f0d,#1a2e1a);border-top:2px solid rgba(37,211,102,.5);padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 -4px 24px rgba(0,0,0,.5);transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);}
+#pwa-banner.show{transform:translateY(0);}
+#pwa-banner .pwa-icon{font-size:28px;flex-shrink:0;}
+#pwa-banner .pwa-text{flex:1;}
+#pwa-banner .pwa-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:#86efac;}
+#pwa-banner .pwa-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;}
+#pwa-banner .pwa-btn{background:#25d366;color:#000;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;padding:10px 18px;cursor:pointer;flex-shrink:0;white-space:nowrap;}
+#pwa-banner .pwa-btn:active{transform:scale(.96);}
+#pwa-banner .pwa-close{background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;}
+#pwa-modal{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.85);display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+#pwa-modal.show{display:flex;}
+#pwa-modal .pwa-sheet{background:#0d1f0d;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;border-top:2px solid rgba(37,211,102,.3);}
+#pwa-modal .pwa-sheet h3{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#86efac;margin-bottom:4px;}
+#pwa-modal .pwa-sheet p{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:20px;}
+#pwa-modal .pwa-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+#pwa-modal .pwa-step{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.05);border-radius:10px;padding:12px;}
+#pwa-modal .pwa-step .sn{width:28px;height:28px;border-radius:50%;background:#25d366;color:#000;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+#pwa-modal .pwa-step .st{font-size:13px;color:rgba(255,255,255,.8);line-height:1.4;}
+#pwa-modal .pwa-step .st b{color:#fff;}
+#pwa-modal .pwa-dismiss{width:100%;background:rgba(255,255,255,.08);border:none;border-radius:10px;color:rgba(255,255,255,.5);font-size:13px;padding:12px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+
+<div class="flash" id="FL"></div>
+
+<!-- MODE BAR -->
+<div class="mbar">
+  <div class="mlbl">MODE:</div>
+  <button class="mbtn lh on" id="mbLH" onclick="setMode('localhost')">🖥️ Localhost (WiFi)</button>
+  <button class="mbtn fb" id="mbFB" onclick="setMode('firebase')">🔥 Firebase</button>
+  <button class="mbtn ls" id="mbLS" onclick="setMode('local')">💾 Offline</button>
+  <button class="mbtn rst" onclick="openReset()">⚠️ Reset</button>
+  <div class="mst ld" id="MST">⏳ Memulai...</div>
+</div>
+
+<!-- TOPBAR -->
+<button class="bell-unlock" id="BELL_BTN" onclick="unlockAudio()" title="Aktifkan suara notifikasi">🔔</button>
+<div class="topbar">
+  <div class="brand">
+    <div class="bi">🍳</div>
+    <div><div class="bn">DAPUR <span>DIPOJOK</span></div><div class="bs">Kitchen Display System</div></div>
+    <div class="badge">KITCHEN</div>
+  </div>
+  <div class="tr">
+    <div class="clk" id="CLK">00:00:00</div>
+    <a href="#" class="alink" id="KASIR_LINK">← Kasir</a>
+  </div>
+</div>
+
+<!-- QUEUE BAR -->
+<div class="qbar">
+  <div class="qs"><div class="qv p" id="QP">0</div><div class="ql">🔴 Menunggu</div></div>
+  <div class="qd"></div>
+  <div class="qs"><div class="qv c" id="QC">0</div><div class="ql">🍳 Dimasak</div></div>
+  <div class="qd"></div>
+  <div class="qs"><div class="qv d" id="QD">0</div><div class="ql">✅ Selesai</div></div>
+  <div class="qd"></div>
+  <div class="qtip">
+    Centang ✓ item yang sudah selesai → tekan <b style="color:var(--gn)">SAJIKAN YANG DICENTANG</b> untuk kirim sebagian
+  </div>
+</div>
+
+<div class="km" id="KM">
+  <div class="ek"><div class="ei">🍽️</div><div class="et">DAPUR SIAP</div><div class="es">Menunggu pesanan dari kasir...</div></div>
+</div>
+
+<!-- PRINT MODAL -->
+<div class="mover" id="PM">
+  <div class="mbox">
+    <div class="mtit">🖨️ CETAK STRUK</div>
+    <div class="msub">Cetak struk kasir atau dapur</div>
+    <div class="stabs">
+      <button class="stab on" id="KT0" onclick="swKT('kasir',this)">🖥️ Kasir</button>
+      <button class="stab" id="KT1" onclick="swKT('dapur',this)">🍳 Dapur</button>
+    </div>
+    <div class="spaper"><div class="sprev sp" id="KPV"></div></div>
+    <div class="macts">
+      <button class="bprt" onclick="doPrintK()">🖨️ Cetak</button>
+      <button class="bcm" onclick="closePM()">✕ Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET CONFIRM -->
+<div class="rmover" id="RMODAL">
+  <div class="rmbox">
+    <div class="rmtit">⚠️ RESET HARI INI?</div>
+    <div class="rmsub">Semua data pesanan hari ini akan dihapus permanen.<br>Nomor urut pesanan kembali ke 1.<br><br>Aksi ini <b style="color:var(--red)">tidak bisa di-undo!</b></div>
+    <div class="rmacts">
+      <button class="btn-rc" onclick="doReset()">🗑️ RESET SEKARANG</button>
+      <button class="btn-rx" onclick="closeReset()">✕ Batal</button>
+    </div>
+  </div>
+</div>
+
+<div id="PA"></div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════
+// AUTO-DETECT HOST
+// Kalau dibuka dari server (IP/localhost), pakai itu.
+// Kalau dibuka sebagai file://, pakai localhost.
+// ══════════════════════════════════════════
+var LH_HOST = (window.location.hostname && window.location.hostname !== '')
+              ? window.location.hostname : 'localhost';
+var LH_PORT = window.location.port || '3000';
+var LH_BASE = 'http://' + LH_HOST + ':' + LH_PORT;
+var LH_WS   = 'ws://'   + LH_HOST + ':' + LH_PORT;
+
+// Fix kasir link
+document.getElementById('KASIR_LINK').href =
+  (window.location.protocol === 'file:') ? 'kasir-input.html' : '/kasir';
+
+var _ws = null, _wsReconnTimer = null;
+
+function lhPatch(p,data,cb){ fetch(LH_BASE+p,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(d){if(cb)cb(null,d);}).catch(function(e){if(cb)cb(e);}); }
+function lhDelete(p,cb){ fetch(LH_BASE+p,{method:'DELETE'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);if(cb)cb(null);}).catch(function(e){if(cb)cb(e);}); }
+
+var FB_URL='https://kasirdankitchenpojok-default-rtdb.asia-southeast1.firebasedatabase.app';
+var FB_AUTH='';
+function fbURL(p){ return FB_URL+p+'.json'+(FB_AUTH?'?auth='+FB_AUTH:''); }
+function fbGet(p,cb){ fetch(fbURL(p)).then(function(r){return r.json();}).then(function(d){cb(null,d);}).catch(function(e){cb(e);}); }
+function fbPatch(p,data,cb){ fetch(fbURL(p),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(d){if(cb)cb(null,d);}).catch(function(e){if(cb)cb(e);}); }
+function fbDelete(p,cb){ fetch(fbURL(p),{method:'DELETE'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);if(cb)cb(null);}).catch(function(e){if(cb)cb(e);}); }
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+var orders=[],knownOrders={},firstLoad=true;
+var curMode='localhost',pollTimer=null;
+var curPO=null,kTab='kasir';
+var LS_KEY='dipojok_orders';
+var _lastHash='';
+
+// Per-card item check state (stored in memory by _key)
+// itemChecks[orderKey] = { itemIndex: true/false }
+var itemChecks = {};
+
+function rp(n){return 'Rp '+parseInt(n||0).toLocaleString('id-ID');}
+
+// ══════════════════════════════════════════
+// MODE
+// ══════════════════════════════════════════
+function setMode(m){
+  curMode=m;
+  document.getElementById('mbLH').classList.toggle('on',m==='localhost');
+  document.getElementById('mbFB').classList.toggle('on',m==='firebase');
+  document.getElementById('mbLS').classList.toggle('on',m==='local');
+  clearInterval(pollTimer);
+  if(_ws){ try{_ws.close();}catch(e){} _ws=null; }
+  clearTimeout(_wsReconnTimer);
+  knownOrders={}; firstLoad=true; _lastHash=''; orders=[];
+  renderKitchen(); updateStats();
+  if(m==='localhost') startLH();
+  else if(m==='firebase') startFB();
+  else startLS();
+}
+
+function setStatus(msg,cls){ var e=document.getElementById('MST'); e.textContent=msg; e.className='mst '+(cls||'ok'); }
+
+// ══════════════════════════════════════════
+// LOCALHOST WebSocket
+// ══════════════════════════════════════════
+function startLH(){
+  setStatus('⏳ Menghubungkan...','ld');
+  connectWS();
+}
+
+function connectWS(){
+  try{
+    _ws=new WebSocket(LH_WS);
+    _ws.onopen=function(){ setStatus('✅ Server Lokal Terhubung','ok'); };
+    _ws.onmessage=function(e){
+      try{
+        var msg=JSON.parse(e.data);
+        if(msg.type==='orders'){ processRaw(msg.data); }
+        else if(msg.type==='new_order'||msg.type==='order_updated'){
+          fetch(LH_BASE+'/api/orders').then(function(r){return r.json();}).then(processRaw).catch(function(){});
+        } else if(msg.type==='reset'){
+          itemChecks={}; processOrders([]); flash('🗑️ Data direset','or');
+        }
+      }catch(ex){}
+    };
+    _ws.onclose=function(){ setStatus('⚠️ Terputus, mencoba ulang...','ld'); _wsReconnTimer=setTimeout(connectWS,3000); };
+    _ws.onerror=function(){ setStatus('❌ Tidak bisa terhubung ke server','er'); };
+  }catch(ex){ setStatus('❌ '+ex.message,'er'); }
+}
+
+// ══════════════════════════════════════════
+// FIREBASE POLL
+// ══════════════════════════════════════════
+function startFB(){
+  setStatus('⏳ Menghubungkan Firebase...','ld');
+  doPoll(); pollTimer=setInterval(doPoll,4000);
+}
+function doPoll(){ fbGet('/kitchen_orders',function(err,data){ if(err){ setStatus('❌ '+err.message,'er'); return; } setStatus('✅ Firebase Terhubung','ok'); processRaw(data); }); }
+
+// ══════════════════════════════════════════
+// LOCAL STORAGE
+// ══════════════════════════════════════════
+function getLO(){ try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]');}catch(e){return [];} }
+function saveLO(a){ try{localStorage.setItem(LS_KEY,JSON.stringify(a));}catch(e){} }
+
+function startLS(){
+  setStatus('💾 Mode Offline','ok');
+  var lo=getLO(); lo.sort(function(a,b){return (a.timestamp||0)-(b.timestamp||0);});
+  lo.forEach(function(o){if(o.kitchenStatus==='pending')knownOrders[o._key]=true;});
+  processOrders(lo); firstLoad=false;
+  pollTimer=setInterval(function(){
+    var fresh=getLO(); fresh.sort(function(a,b){return (a.timestamp||0)-(b.timestamp||0);});
+    processOrders(fresh);
+  },1500);
+}
+
+function processRaw(data){
+  var newOrders=[];
+  if(data&&typeof data==='object'){
+    Object.keys(data).forEach(function(k){ if(data[k]&&typeof data[k]==='object') newOrders.push(Object.assign({_key:k},data[k])); });
+  }
+  newOrders.sort(function(a,b){return (a.timestamp||0)-(b.timestamp||0);});
+  processOrders(newOrders); firstLoad=false;
+}
+
+function processOrders(newOrders){
+  var hash=JSON.stringify(newOrders.map(function(o){return o._key+':'+o.kitchenStatus+':'+(o.items||[]).map(function(i){return (i.done?'1':'0')+(i.delivered?'d':'');}).join('');}));
+  var changed=hash!==_lastHash; _lastHash=hash;
+
+  newOrders.forEach(function(o){
+    if(o.kitchenStatus==='pending'&&!knownOrders[o._key]){
+      knownOrders[o._key]=true;
+      if(!firstLoad){ flash('🔔 PESANAN BARU! MEJA '+o.table,'or'); snd('new'); }
+    }
+  });
+
+  orders=newOrders;
+  if(changed){ renderKitchen(); updateStats(); }
+}
+
+// ══════════════════════════════════════════
+// ITEM CHECK TOGGLE (visual + state)
+// ══════════════════════════════════════════
+function togItem(orderKey, idx){
+  var order = orders.find(function(o){return o._key===orderKey;});
+  if(!order) return;
+  var item = (order.items||[])[idx];
+  // Block toggle if already served or already delivered to table
+  if(item && (item.done || item.delivered)) return;
+
+  if(!itemChecks[orderKey]) itemChecks[orderKey]={};
+  itemChecks[orderKey][idx] = !itemChecks[orderKey][idx];
+
+  // Update visuals without full re-render
+  var li = document.querySelector('[data-order="'+orderKey+'"] li[data-idx="'+idx+'"]');
+  var btn = document.querySelector('[data-order="'+orderKey+'"] .ick[data-idx="'+idx+'"]');
+  if(li) li.classList.toggle('item-done', !!itemChecks[orderKey][idx]);
+  if(btn) btn.classList.toggle('chk', !!itemChecks[orderKey][idx]);
+
+  updateCardFooter(orderKey);
+  updateProgressBar(orderKey);
+}
+
+function getCheckedCount(orderKey, items){
+  // Count: already-served (item.done) + newly checked in session
+  var checks = itemChecks[orderKey]||{};
+  var count = 0;
+  (items||[]).forEach(function(item,i){
+    if(item.done || checks[i]) count++;
+  });
+  return count;
+}
+
+function getNewlyChecked(orderKey, items){
+  // Only count freshly checked (not already served)
+  var checks = itemChecks[orderKey]||{};
+  var count = 0;
+  (items||[]).forEach(function(item,i){
+    if(!item.done && checks[i]) count++;
+  });
+  return count;
+}
+
+function updateProgressBar(orderKey){
+  var card = document.querySelector('[data-order="'+orderKey+'"]');
+  if(!card) return;
+  var order = orders.find(function(o){return o._key===orderKey;});
+  if(!order) return;
+  var items = order.items||[];
+  var total = items.length;
+  var checked = getCheckedCount(orderKey, items);
+  var fill = card.querySelector('.progress-fill');
+  if(fill) fill.style.width = (total>0 ? Math.round(checked/total*100) : 0)+'%';
+}
+
+function updateCardFooter(orderKey){
+  var card = document.querySelector('[data-order="'+orderKey+'"]');
+  if(!card) return;
+  var order = orders.find(function(o){return o._key===orderKey;});
+  if(!order) return;
+  var items = order.items||[];
+  var total = items.length;
+  var newlyChecked = getNewlyChecked(orderKey, items);
+  var totalChecked = getCheckedCount(orderKey, items);
+  var sajRow = card.querySelector('.sajikan-row');
+  if(!sajRow) return;
+
+  var btnPartial = sajRow.querySelector('.btn-sajikan');
+  var btnAll = sajRow.querySelector('.btn-sajikan-all');
+
+  if(btnPartial){
+    btnPartial.disabled = newlyChecked===0;
+    var countEl = btnPartial.querySelector('.saj-count');
+    if(countEl) countEl.textContent = totalChecked+'/'+total;
+  }
+  if(btnAll){
+    btnAll.style.opacity = newlyChecked>0 ? '1':'0.5';
+  }
+
+  // Partial badge
+  var pbadge = card.querySelector('.partial-badge');
+  if(pbadge){
+    var alreadyServedCount = items.filter(function(it){return it.done || it.delivered;}).length;
+    if(alreadyServedCount>0 && alreadyServedCount<total){
+      pbadge.textContent = alreadyServedCount+' dari '+total+' sudah dikirim';
+      pbadge.style.display='inline-block';
+    } else {
+      pbadge.style.display='none';
+    }
+  }
+}
+
+// ══════════════════════════════════════════
+// SAJIKAN (partial or all)
+// ══════════════════════════════════════════
+function sajikanChecked(orderKey){
+  var order = orders.find(function(o){return o._key===orderKey;});
+  if(!order) return;
+  var checks = itemChecks[orderKey]||{};
+  var items = order.items||[];
+  var newlyChecked = getNewlyChecked(orderKey, items);
+  if(newlyChecked===0){ flash('Centang dulu item yang sudah selesai!','or'); return; }
+
+  // Merge: already served + newly checked (keep delivered flag intact)
+  var newItems = items.map(function(item,i){
+    if(item.delivered) return Object.assign({},item); // already delivered, don't touch
+    return Object.assign({},item, {done: item.done || (!item.done && !!checks[i])});
+  });
+
+  var totalServed = newItems.filter(function(it){return it.done || it.delivered;}).length;
+  var allDone = totalServed === items.length;
+  var patch = { items: newItems };
+  if(allDone){
+    patch.kitchenStatus = 'done';
+    patch.status = 'Selesai';
+    patch.doneAt = Date.now();
+  } else {
+    patch.kitchenStatus = 'cooking';
+    patch.partialCount = totalServed;
+  }
+
+  // Clear only the newly-checked flags (keep locks for served items via item.done)
+  itemChecks[orderKey] = {};
+
+  doUpdate(orderKey, patch, function(err){
+    if(err){ flash('❌ Gagal update','rd'); return; }
+    if(allDone){
+      flash('✅ Pesanan #'+order.orderNumber+' — MEJA '+order.table+' SEMUA SIAP!','gn');
+    } else {
+      flash('🛵 '+newlyChecked+' item MEJA '+order.table+' siap diantar! ('+totalServed+'/'+items.length+' total)','gn');
+    }
+  });
+}
+
+function sajikanSemua(orderKey){
+  var order = orders.find(function(o){return o._key===orderKey;});
+  if(!order) return;
+  var items = order.items||[];
+  if(!itemChecks[orderKey]) itemChecks[orderKey]={};
+  // Only check items that haven't been served or delivered yet
+  items.forEach(function(item,i){ if(!item.done && !item.delivered) itemChecks[orderKey][i]=true; });
+  sajikanChecked(orderKey);
+}
+
+function doUpdate(key, patch, cb){
+  if(curMode==='localhost') lhPatch('/api/orders/'+key, patch, cb);
+  else if(curMode==='firebase') fbPatch('/kitchen_orders/'+key, patch, cb);
+  else {
+    var a=getLO();
+    a.forEach(function(o){if(o._key===key) Object.assign(o,patch);});
+    saveLO(a); _lastHash='';
+    if(cb) cb(null);
+  }
+}
+
+// ══════════════════════════════════════════
+// START COOKING
+// ══════════════════════════════════════════
+function startCooking(key){
+  doUpdate(key,{kitchenStatus:'cooking',cookingStartAt:Date.now()},null);
+}
+
+// ══════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════
+function openReset(){ document.getElementById('RMODAL').classList.add('open'); }
+function closeReset(){ document.getElementById('RMODAL').classList.remove('open'); }
+function doReset(){
+  closeReset();
+  var done=function(err){ if(err){flash('❌ Gagal reset','rd');return;} itemChecks={}; knownOrders={}; _lastHash=''; orders=[]; processOrders([]); flash('🗑️ Data hari ini direset!','gn'); };
+  if(curMode==='localhost') lhDelete('/api/orders',done);
+  else if(curMode==='firebase') fbDelete('/kitchen_orders',done);
+  else { localStorage.removeItem(LS_KEY); _lastHash=''; done(null); }
+}
+
+// ══════════════════════════════════════════
+// RENDER KITCHEN
+// ══════════════════════════════════════════
+function renderKitchen(){
+  var pending=orders.filter(function(o){return o.kitchenStatus==='pending';});
+  var cooking=orders.filter(function(o){return o.kitchenStatus==='cooking';});
+  var done=orders.filter(function(o){return o.kitchenStatus==='done'||o.kitchenStatus==='delivered';}).slice(-6);
+
+  if(!pending.length&&!cooking.length&&!done.length){
+    document.getElementById('KM').innerHTML='<div class="ek"><div class="ei">🍽️</div><div class="et">DAPUR SIAP</div><div class="es">Menunggu pesanan dari kasir...</div></div>';
+    return;
+  }
+
+  var h='';
+  h+='<div class="sh"><div class="st">🔴 ANTRIAN <span class="r">BARU</span> ('+pending.length+')</div></div><div class="og">';
+  if(!pending.length) h+='<div style="color:var(--mt);font-size:12px;padding:10px 0;">Tidak ada.</div>';
+  else pending.forEach(function(o){h+=buildCard(o);});
+  h+='</div>';
+
+  h+='<div class="sh"><div class="st">🍳 SEDANG <span class="o">DIMASAK</span> ('+cooking.length+')</div></div><div class="og">';
+  if(!cooking.length) h+='<div style="color:var(--mt);font-size:12px;padding:10px 0;">Kosong.</div>';
+  else cooking.forEach(function(o){h+=buildCard(o);});
+  h+='</div>';
+
+  if(done.length){
+    h+='<div style="opacity:.6;"><div class="sh"><div class="st">✅ SELESAI <span class="g">TERKINI</span></div></div><div class="og">';
+    done.slice().reverse().forEach(function(o){h+=buildCard(o);});
+    h+='</div></div>';
+  }
+  document.getElementById('KM').innerHTML=h;
+}
+
+function buildCard(o){
+  var ip=o.kitchenStatus==='pending';
+  var ic=o.kitchenStatus==='cooking';
+  var id=o.kitchenStatus==='done'||o.kitchenStatus==='delivered';
+  var k=o._key;
+
+  var ts=o.createdAt?new Date(o.createdAt).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'—';
+  var st=ic?(o.cookingStartAt||o.timestamp):o.timestamp;
+  var elapsed=Math.floor((Date.now()-(st||Date.now()))/1000);
+  var mm=Math.floor(elapsed/60).toString().padStart(2,'0'),ss=(elapsed%60).toString().padStart(2,'0');
+
+  var tmrH=id
+    ?'<div class="tmr d">✅ SELESAI</div>'
+    :'<div class="tmr '+(ic?'c':'p')+'" id="tmr-'+k+'">'+mm+':'+ss+'</div>';
+
+  var checks = itemChecks[k]||{};
+  var items = o.items||[];
+  // Count items: already served (item.done) + newly checked
+  var alreadyServedCount = items.filter(function(it){return it.done;}).length;
+  var newlyCheckedCount = getNewlyChecked(k, items);
+  var totalCheckedCount = alreadyServedCount + newlyCheckedCount;
+
+  var ih = items.map(function(item,i){
+    // item.done = already served in a previous partial sajikan
+    var alreadyServed = !!item.done;
+    // item.delivered = already sent to table via partial delivery from kasir
+    var alreadyDelivered = !!item.delivered;
+    // checks[i] = newly checked in current session (not yet sent)
+    var newlyChecked = ic && !alreadyServed && !alreadyDelivered && !!checks[i];
+    var itemDone = alreadyServed || newlyChecked;
+    var ckHtml = '';
+
+    // Already delivered to table by kasir partial — show SUDAH DI ANTAR badge
+    if(alreadyDelivered){
+      return '<li class="item-done" data-idx="'+i+'">'
+        +'<span class="iq">'+item.qty+'x</span>'
+        +'<span class="in">'+item.name+'</span>'
+        +'<span style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--bl);background:rgba(59,130,246,.15);padding:2px 7px;border-radius:10px;flex-shrink:0;white-space:nowrap;">SUDAH DI ANTAR</span>'
+        +'</li>';
+    }
+
+    if(ic){
+      if(alreadyServed){
+        // Lock — already served, show green tick, no click
+        ckHtml = '<div class="ick chk" style="cursor:not-allowed;opacity:0.6;" title="Sudah disajikan"></div>';
+      } else {
+        // Free to toggle
+        ckHtml = '<div class="ick '+(newlyChecked?'chk':'')+'" data-idx="'+i+'"'
+          +' onclick="togItem(\''+k+'\','+i+')"'
+          +' ontouchend="event.preventDefault();togItem(\''+k+'\','+i+')"></div>';
+      }
+    } else if(id){
+      // Order fully done — show tick for all items that were served
+      ckHtml = (alreadyServed||itemDone)
+        ? '<div style="color:var(--gn);font-size:20px;flex-shrink:0;">✓</div>'
+        : '';
+    }
+
+    return '<li class="'+(itemDone?'item-done':'')+'" data-idx="'+i+'">'
+      +'<span class="iq">'+item.qty+'x</span>'
+      +'<span class="in">'+item.name+'</span>'
+      +ckHtml
+      +'</li>';
+  }).join('');
+
+  var nh=o.noted?'<div class="cnote">📝 '+o.noted+'</div>':'';
+
+  // Progress bar (cooking only) — show total served / total items
+  var progressH = ic
+    ? '<div class="progress-bar"><div class="progress-fill" style="width:'+(items.length>0?Math.round(totalCheckedCount/items.length*100):0)+'%"></div></div>'
+    : '';
+
+  // Footer buttons
+  var fh='';
+  if(id){
+    fh='<div class="bdl">'+(o.kitchenStatus==='delivered'?'📦 SUDAH DIANTAR':'✅ SUDAH DISAJIKAN')+'</div>'
+      +'<div class="sajikan-row" style="margin-top:7px;">'
+      +'<button class="bp" onclick="openPM(\''+k+'\')" style="width:100%;">🖨️ Cetak Struk</button>'
+      +'</div>';
+  } else if(ic){
+    var allChecked = totalCheckedCount===items.length && items.length>0;
+    fh='<div class="sajikan-row">'
+      +'<button class="btn-sajikan" onclick="sajikanChecked(\''+k+'\')" '+(newlyCheckedCount===0?'disabled':'')+' title="Sajikan item yang baru dicentang">'
+      +'✓ Sajikan <span class="saj-count">'+totalCheckedCount+'/'+items.length+'</span>'
+      +'</button>'
+      +'<button class="btn-sajikan-all" onclick="sajikanSemua(\''+k+'\')" title="Sajikan semua item sekaligus" style="opacity:'+(newlyCheckedCount>0||alreadyServedCount<items.length?'1':'0.5')+'">'
+      +(allChecked?'✅ SEMUA SIAP':'✓ SEMUA')
+      +'</button>'
+      +'<button class="bp" onclick="openPM(\''+k+'\')">🖨️</button>'
+      +'</div>';
+  } else {
+    fh='<button class="btn-mulai" onclick="startCooking(\''+k+'\')" style="margin-bottom:7px;">🍳 MULAI MASAK</button>'
+      +'<div class="sajikan-row">'
+      +'<button class="bp" onclick="openPM(\''+k+'\')" style="width:100%;">🖨️ Cetak Struk</button>'
+      +'</div>';
+  }
+
+  // Partial done indicator in header
+  var partialBadge = (ic && alreadyServedCount>0 && alreadyServedCount<items.length)
+    ? '<div class="partial-badge">'+alreadyServedCount+'/'+items.length+' sudah dikirim</div>'
+    : '';
+
+  return '<div class="oc '+o.kitchenStatus+(ic?' pulsing':'')+(id?' ':'')+'" data-order="'+k+'">'
+    +(ip?'<div class="nb">BARU!</div>':'')
+    +'<div class="ch"><div>'
+    +'<div class="cid">Pesanan #'+o.orderNumber+'</div>'
+    +'<div class="ctbl">MEJA '+o.table+'</div>'
+    +'<div class="ctm">Masuk: '+ts+'</div>'
+    +partialBadge
+    +(o.customer&&o.customer!=='—'?'<div class="ccu">👤 '+o.customer+'</div>':'')
+    +'</div>'+tmrH+'</div>'
+    +progressH
+    +'<div class="cb">'+nh+'<ul class="ci">'+ih+'</ul></div>'
+    +'<div class="cf">'+fh+'</div></div>';
+}
+
+function updateStats(){
+  document.getElementById('QP').textContent=orders.filter(function(o){return o.kitchenStatus==='pending';}).length;
+  document.getElementById('QC').textContent=orders.filter(function(o){return o.kitchenStatus==='cooking';}).length;
+  document.getElementById('QD').textContent=orders.filter(function(o){return o.kitchenStatus==='done'||o.kitchenStatus==='delivered';}).length;
+}
+
+// Live timer — only update timer elements, no full re-render
+setInterval(function(){
+  orders.forEach(function(o){
+    if(o.kitchenStatus==='done'||o.kitchenStatus==='delivered') return;
+    var el=document.getElementById('tmr-'+o._key); if(!el) return;
+    var st=o.kitchenStatus==='cooking'?(o.cookingStartAt||o.timestamp):o.timestamp;
+    var elapsed=Math.floor((Date.now()-(st||Date.now()))/1000);
+    el.textContent=Math.floor(elapsed/60).toString().padStart(2,'0')+':'+(elapsed%60).toString().padStart(2,'0');
+    if(o.kitchenStatus==='cooking'&&elapsed>900) el.style.color='#ff4444';
+  });
+},1000);
+
+// ══════════════════════════════════════════
+// PRINT MODAL
+// ══════════════════════════════════════════
+function openPM(key){
+  var o=orders.find(function(x){return x._key===key;}); if(!o) return;
+  curPO=o; kTab='kasir';
+  document.getElementById('KT0').classList.add('on'); document.getElementById('KT1').classList.remove('on');
+  buildKS('kasir'); document.getElementById('PM').classList.add('open');
+}
+function closePM(){ document.getElementById('PM').classList.remove('open'); curPO=null; }
+function swKT(tab,btn){ kTab=tab; document.querySelectorAll('#PM .stab').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); buildKS(tab); }
+
+function buildKS(tab){
+  var o=curPO; if(!o) return;
+  var ts=o.createdAt?new Date(o.createdAt).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  var ds=o.createdAt?new Date(o.createdAt).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var h='';
+  if(tab==='kasir'){
+    var tot=(o.items||[]).reduce(function(s,i){return s+(i.price*i.qty);},0);
+    var ih=(o.items||[]).map(function(i){return '<div class="sit"><div class="srw"><span><b>'+i.qty+'x '+i.name+'</b></span><span>'+rp(i.price*i.qty)+'</span></div></div>';}).join('');
+    h='<div class="sc"><div class="slo">KASIR — DIPOJOK</div><div class="ssu">COFFEE &amp; EATERY</div></div>'
+      +'<div class="shr"></div>'
+      +'<div class="srw"><span class="slb">No. Order</span><b>Pesanan #'+o.orderNumber+'</b></div>'
+      +'<div class="srw"><span class="slb">Tanggal</span><span>'+ds+'</span></div>'
+      +'<div class="srw"><span class="slb">Waktu</span><span>'+ts+'</span></div>'
+      +'<div class="srw"><span class="slb">Meja</span><b class="sbg">'+o.table+'</b></div>'
+      +'<div class="srw"><span class="slb">Customer</span><span>'+(o.customer||'—')+'</span></div>'
+      +'<div class="shr"></div>'+(o.noted?'<div class="snt">📝 '+o.noted+'</div>':'')
+      +'<div class="slb" style="margin-bottom:3px;">RINCIAN:</div>'+ih
+      +'<div class="shr"></div>'
+      +'<div class="srw"><span class="sto">TOTAL BAYAR</span><span class="sto" style="color:#c00;">'+rp(tot)+'</span></div>'
+      +'<div class="sft">Struk Kasir — Arsip Internal</div>';
+  } else {
+    var dh=(o.items||[]).map(function(i){return '<div class="sit"><div class="siq">'+i.qty+'x</div><div class="snm">'+i.name+'</div></div>';}).join('');
+    h='<div class="sc"><div class="slo">🍳 DAPUR — DIPOJOK</div></div>'
+      +'<div class="shr"></div>'
+      +'<div class="srw"><span class="slb">No. Order</span><b style="font-size:17px;">Pesanan #'+o.orderNumber+'</b></div>'
+      +'<div class="srw"><span class="slb">Waktu</span><b style="font-size:15px;">'+ts+'</b></div>'
+      +'<div class="srw"><span class="slb">Meja</span><b class="sbg" style="font-size:22px;">'+o.table+'</b></div>'
+      +'<div class="shr"></div>'+(o.noted?'<div class="snt">📝 CATATAN: '+o.noted+'</div>':'')
+      +'<div class="slb" style="margin-bottom:3px;">MASAK:</div>'+dh
+      +'<div class="shr"></div>'
+      +'<div class="sft">Struk Dapur — '+ds+'</div>';
+  }
+  document.getElementById('KPV').innerHTML=h;
+}
+
+function doPrintK(){ var c=document.getElementById('KPV').innerHTML; var pa=document.getElementById('PA'); pa.innerHTML=c; pa.style.display='block'; window.print(); setTimeout(function(){pa.style.display='none';pa.innerHTML='';},900); }
+
+// ══════════════════════════════════════════
+// SOUND & FLASH
+// ══════════════════════════════════════════
+// AudioContext dibuat sekali, di-resume saat ada interaksi user
+var _audioCtx = null;
+var _audioUnlocked = false;
+function getAudioCtx(){
+  if(!_audioCtx) _audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+  if(_audioCtx.state==='suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+function unlockAudio(){
+  try{
+    _audioUnlocked = true;
+    var ctx = getAudioCtx();
+    var buf = ctx.createBuffer(1,1,22050);
+    var src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination); src.start(0);
+    var btn = document.getElementById('BELL_BTN');
+    if(btn){ btn.classList.add('unlocked'); btn.title='Suara aktif ✓'; }
+  }catch(e){}
+}
+// Auto-unlock pada interaksi pertama user (tap/klik mana saja)
+function _autoUnlock(){ if(!_audioUnlocked){ unlockAudio(); } }
+document.addEventListener('touchstart', _autoUnlock, {once:true, passive:true});
+document.addEventListener('click',      _autoUnlock, {once:true, passive:true});
+// Coba unlock langsung saat halaman load (works di beberapa browser)
+window.addEventListener('load', function(){
+  try{
+    var ctx = new(window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state === 'running'){
+      _audioCtx = ctx; _audioUnlocked = true;
+      var btn = document.getElementById('BELL_BTN');
+      if(btn){ btn.classList.add('unlocked'); }
+    } else {
+      ctx.close();
+    }
+  }catch(e){}
+});
+
+function snd(type){
+  try{
+    var ctx = getAudioCtx();
+    function bell(freq, startTime, vol){
+      var dur = 1.4;
+      var carrier  = ctx.createOscillator();
+      var modulator= ctx.createOscillator();
+      var modGain  = ctx.createGain();
+      var ampGain  = ctx.createGain();
+      modulator.frequency.value = freq * 7;
+      modulator.type = 'sine';
+      modGain.gain.value = freq * 5;
+      carrier.frequency.value = freq;
+      carrier.type = 'sine';
+      modulator.connect(modGain);
+      modGain.connect(carrier.frequency);
+      carrier.connect(ampGain);
+      ampGain.connect(ctx.destination);
+      ampGain.gain.setValueAtTime(vol, ctx.currentTime + startTime);
+      ampGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + dur);
+      modulator.start(ctx.currentTime + startTime);
+      modulator.stop(ctx.currentTime + startTime + dur + 0.1);
+      carrier.start(ctx.currentTime + startTime);
+      carrier.stop(ctx.currentTime + startTime + dur + 0.1);
+    }
+    // 3x ding bell — pesanan baru masuk
+    bell(880,  0,    0.55);
+    bell(880,  0.55, 0.45);
+    bell(1046, 1.1,  0.50);
+  }catch(e){}
+}
+function flash(msg,cls){ var e=document.getElementById('FL'); e.textContent=msg; e.className='flash show '+(cls||'or'); clearTimeout(window._ft); window._ft=setTimeout(function(){e.classList.remove('show');},3600); }
+function tick(){ document.getElementById('CLK').textContent=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+tick(); setInterval(tick,1000);
+
+document.getElementById('PM').addEventListener('click',function(e){if(e.target===this)closePM();});
+document.getElementById('RMODAL').addEventListener('click',function(e){if(e.target===this)closeReset();});
+
+// Auto-detect
+if(window.location.protocol==='file:') setMode('firebase');
+else setMode('localhost');
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+}
+</script>
+
+<!-- PWA Install Banner & Modal -->
+<div id="pwa-banner">
+  <div class="pwa-icon">📲</div>
+  <div class="pwa-text">
+    <div class="pwa-title">Install Aplikasi Dapur</div>
+    <div class="pwa-sub">Akses cepat dari layar utama HP</div>
+  </div>
+  <button class="pwa-btn" onclick="showInstall()">INSTALL</button>
+  <button class="pwa-close" onclick="hideBanner()">✕</button>
+</div>
+
+<div id="pwa-modal">
+  <div class="pwa-sheet">
+    <h3>📲 INSTALL DAPUR</h3>
+    <p>Tambahkan ke layar utama HP kamu</p>
+    <div id="pwa-steps" class="pwa-steps"></div>
+    <button class="pwa-dismiss" onclick="hideInstall()">Tutup</button>
+  </div>
+</div>
+
+<script>
+var _deferredPrompt = null;
+var _isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault();
+  _deferredPrompt = e;
+  setTimeout(function(){ document.getElementById('pwa-banner').classList.add('show'); }, 2000);
+});
+
+if(_isIOS){
+  var _standalone = window.navigator.standalone;
+  if(!_standalone){
+    setTimeout(function(){ document.getElementById('pwa-banner').classList.add('show'); }, 2000);
+  }
+}
+
+function hideBanner(){
+  document.getElementById('pwa-banner').classList.remove('show');
+}
+
+function showInstall(){
+  hideBanner();
+  if(_deferredPrompt){
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(function(){ _deferredPrompt = null; });
+    return;
+  }
+  var steps = '';
+  if(_isIOS){
+    steps = '<div class="pwa-step"><div class="sn">1</div><div class="st">Tap ikon <b>Share</b> (kotak panah ke atas) di bawah layar Safari</div></div>'
+          + '<div class="pwa-step"><div class="sn">2</div><div class="st">Scroll ke bawah → pilih <b>"Add to Home Screen"</b></div></div>'
+          + '<div class="pwa-step"><div class="sn">3</div><div class="st">Tap <b>Add</b> — icon Dapur muncul di layar!</div></div>';
+  } else {
+    steps = '<div class="pwa-step"><div class="sn">1</div><div class="st">Tap titik tiga <b>⋮</b> di pojok kanan atas Chrome</div></div>'
+          + '<div class="pwa-step"><div class="sn">2</div><div class="st">Pilih <b>"Add to Home Screen"</b> atau <b>"Install App"</b></div></div>'
+          + '<div class="pwa-step"><div class="sn">3</div><div class="st">Tap <b>Install</b> — icon Dapur muncul di layar!</div></div>';
+  }
+  document.getElementById('pwa-steps').innerHTML = steps;
+  document.getElementById('pwa-modal').classList.add('show');
+}
+
+function hideInstall(){
+  document.getElementById('pwa-modal').classList.remove('show');
+}
+
+window.addEventListener('appinstalled', function(){
+  hideBanner();
+  hideInstall();
+});
+</script>
+
+</body>
+</html>
