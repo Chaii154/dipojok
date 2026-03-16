@@ -343,6 +343,28 @@ body.light .es{color:#444444;}
 
 /* ── SCROLLBAR INVISIBLE ── */
 </style>
+
+<script>
+// Auto landscape saat buka aplikasi
+(function(){
+  function lockLandscape(){
+    try{
+      if(screen.orientation && screen.orientation.lock){
+        screen.orientation.lock('landscape').catch(function(){});
+      } else if(screen.lockOrientation){
+        screen.lockOrientation('landscape');
+      } else if(screen.mozLockOrientation){
+        screen.mozLockOrientation('landscape');
+      }
+    }catch(e){}
+  }
+  // Coba langsung
+  lockLandscape();
+  // Coba lagi setelah interaksi pertama (iOS butuh user gesture)
+  document.addEventListener('touchstart', lockLandscape, {once:true, passive:true});
+  document.addEventListener('click', lockLandscape, {once:true, passive:true});
+})();
+</script>
 </head>
 <body>
 
@@ -444,18 +466,10 @@ var LH_WS   = 'ws://'   + LH_HOST + ':' + LH_PORT;
 
 // Fix kasir link — auto detect platform
 (function(){
+  var host = window.location.hostname;
   var p = window.location.pathname;
-  var isGithub = window.location.hostname.indexOf('github.io') !== -1;
-  var isFile = window.location.protocol === 'file:';
-  var link;
-  if(isFile || isGithub){
-    // GitHub Pages atau file lokal — pakai relative path
-    link = p.replace('kitchen.html','kasir-input.html').replace('/kitchen','kasir-input.html');
-    if(link === p) link = 'kasir-input.html';
-  } else {
-    // Netlify atau localhost server
-    link = '/kasir';
-  }
+  var isServer = !host.includes('github.io') && window.location.protocol !== 'file:';
+  var link = isServer ? '/kasir' : p.substring(0, p.lastIndexOf('/')+1) + 'kasir-input.html';
   document.getElementById('KASIR_LINK').href = link;
 })();
 

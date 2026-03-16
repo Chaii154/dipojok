@@ -51,7 +51,9 @@ html,body{overflow-x:hidden;}
 body{font-family:'Montserrat',sans-serif;background:var(--bk);color:var(--tx);min-height:100vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 
 /* ── MODE BAR ── */
-.mbar{background:#0d0d0d;border-bottom:2px solid var(--br);padding:0 16px;height:40px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.mbar{background:#0d0d0d;border-bottom:2px solid var(--br);padding:0 16px;height:40px;display:flex;align-items:center;gap:8px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+.mbar::-webkit-scrollbar{display:none;}
+.mbar>*{flex-shrink:0;}
 .mlbl{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--mt);}
 .mbtn{padding:4px 11px;border-radius:3px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1px solid;}
 .mbtn.fb{background:rgba(255,160,0,.1);color:#ffb300;border-color:rgba(255,160,0,.35);}
@@ -87,7 +89,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bk);color:var(--tx);mi
 .notif.or{background:var(--or);color:#000;box-shadow:0 8px 28px rgba(255,140,0,.55);}
 
 /* ── MAIN LAYOUT — full height, no scroll on body ── */
-.layout{display:grid;grid-template-columns:1fr 420px;min-height:calc(100vh - 94px);}
+.layout{display:grid;grid-template-columns:1fr min(420px,45vw);min-height:calc(100vh - 94px);}
 @media(max-width:768px){
   .layout{display:flex;flex-direction:column;min-height:unset;}
   .fa{border-right:none;border-bottom:1px solid var(--br);overflow-y:visible;max-height:unset;}
@@ -416,7 +418,37 @@ body.light .sa-item-row.remain-row{background:rgba(0,0,0,.02);}
 .rw-meja-big{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--wh);line-height:1;}
 .rw-done-timer{display:inline-flex;align-items:center;gap:4px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:2px 8px;border-radius:4px;background:rgba(59,130,246,.12);color:var(--bl);margin-top:2px;}
 body.light .rw-item-row{background:rgba(59,130,246,.06);}
+
+.btn-short{display:none;}
+.btn-full{display:inline;}
+@media(max-width:520px){
+  .btn-full{display:none;}
+  .btn-short{display:inline;}
+  .mst{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+}
 </style>
+
+<script>
+// Auto landscape saat buka aplikasi
+(function(){
+  function lockLandscape(){
+    try{
+      if(screen.orientation && screen.orientation.lock){
+        screen.orientation.lock('landscape').catch(function(){});
+      } else if(screen.lockOrientation){
+        screen.lockOrientation('landscape');
+      } else if(screen.mozLockOrientation){
+        screen.mozLockOrientation('landscape');
+      }
+    }catch(e){}
+  }
+  // Coba langsung
+  lockLandscape();
+  // Coba lagi setelah interaksi pertama (iOS butuh user gesture)
+  document.addEventListener('touchstart', lockLandscape, {once:true, passive:true});
+  document.addEventListener('click', lockLandscape, {once:true, passive:true});
+})();
+</script>
 </head>
 <body>
 
@@ -424,11 +456,10 @@ body.light .rw-item-row{background:rgba(59,130,246,.06);}
 
 <!-- MODE BAR -->
 <div class="mbar">
-  <div class="mlbl">MODE:</div>
-  <button class="mbtn lh on" id="mbLH" onclick="setMode('localhost')">🖥️ Localhost (WiFi)</button>
-  <button class="mbtn fb" id="mbFB" onclick="setMode('firebase')">🔥 Firebase</button>
-  <button class="mbtn ls" id="mbLS" onclick="setMode('local')">💾 Offline</button>
-  <button class="mbtn rst" onclick="openReset()">⚠️ Reset Hari Ini</button>
+  <button class="mbtn lh on" id="mbLH" onclick="setMode('localhost')"><span class="btn-full">🖥️ Localhost (WiFi)</span><span class="btn-short">🖥️ WiFi</span></button>
+  <button class="mbtn fb" id="mbFB" onclick="setMode('firebase')"><span class="btn-full">🔥 Firebase</span><span class="btn-short">🔥 FB</span></button>
+  <button class="mbtn ls" id="mbLS" onclick="setMode('local')"><span class="btn-full">💾 Offline</span><span class="btn-short">💾</span></button>
+  <button class="mbtn rst" onclick="openReset()"><span class="btn-full">⚠️ Reset Hari Ini</span><span class="btn-short">⚠️ Reset</span></button>
   <div class="mst ld" id="MST">⏳ Memulai...</div>
 </div>
 
@@ -1380,16 +1411,10 @@ buildMenu(); renderCart();
 
 // Auto detect link ke kitchen
 (function(){
+  var host = window.location.hostname;
   var p = window.location.pathname;
-  var isGithub = window.location.hostname.indexOf('github.io') !== -1;
-  var isFile = window.location.protocol === 'file:';
-  var link;
-  if(isFile || isGithub){
-    link = p.replace('kasir-input.html','kitchen.html').replace('/kasir','kitchen.html');
-    if(link === p) link = 'kitchen.html';
-  } else {
-    link = '/kitchen';
-  }
+  var isServer = !host.includes('github.io') && window.location.protocol !== 'file:';
+  var link = isServer ? '/kitchen' : p.substring(0, p.lastIndexOf('/')+1) + 'kitchen.html';
   var el = document.getElementById('KITCHEN_LINK');
   if(el) el.href = link;
 })();
