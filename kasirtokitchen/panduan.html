@@ -309,18 +309,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div style="max-width:700px;width:100%;">
     <div class="tag">01 — Overview</div>
     <div class="big-title">ALUR KERJA<br>SISTEM</div>
-    <div class="desc">Begini cara sistem DiPojok bekerja dari kasir sampai pesanan di tangan pelanggan.</div>
-    <div class="flow-row">
+    <div class="desc">Sistem DiPojok otomatis membedakan alur <b style="color:#fff;">makanan</b> dan <b style="color:#a78bfa;">minuman</b>.</div>
+    <div class="flow-row" style="margin-bottom:14px;">
       <div class="flow-box">
         <div class="flow-icon">🧾</div>
         <div class="flow-lbl">KASIR</div>
         <div class="flow-sub">Input order</div>
-      </div>
-      <div class="flow-arr">→</div>
-      <div class="flow-box">
-        <div class="flow-icon">📡</div>
-        <div class="flow-lbl">KIRIM</div>
-        <div class="flow-sub">Realtime</div>
       </div>
       <div class="flow-arr">→</div>
       <div class="flow-box">
@@ -339,6 +333,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
         <div class="flow-icon">✅</div>
         <div class="flow-lbl">SELESAI</div>
         <div class="flow-sub">Riwayat</div>
+      </div>
+    </div>
+    <div class="flow-row" style="opacity:0;animation:slideUp .5s .45s ease forwards;">
+      <div class="flow-box" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.06);">
+        <div class="flow-icon">🧾</div>
+        <div class="flow-lbl" style="color:#a78bfa;">KASIR</div>
+        <div class="flow-sub">Minuman saja</div>
+      </div>
+      <div class="flow-arr">→</div>
+      <div class="flow-box" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.06);">
+        <div class="flow-icon">🍹</div>
+        <div class="flow-lbl" style="color:#a78bfa;">LANGSUNG</div>
+        <div class="flow-sub">Skip dapur</div>
+      </div>
+      <div class="flow-arr">→</div>
+      <div class="flow-box" style="border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.06);">
+        <div class="flow-icon">🛵</div>
+        <div class="flow-lbl" style="color:#a78bfa;">SIAP ANTAR</div>
+        <div class="flow-sub">Langsung!</div>
       </div>
     </div>
   </div>
@@ -395,27 +408,59 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
         </div>
         <div class="step-card gn">
           <div class="step-num-big">3</div>
-          <div class="step-name">Kirim ke Dapur</div>
-          <div class="step-info">Tap tombol merah KIRIM KE DAPUR. Dapur langsung dapat notifikasi.</div>
+          <div class="step-name">Kirim Pesanan</div>
+          <div class="step-info">Makanan → masuk dapur. Minuman saja → langsung Siap Antar, tidak perlu ke dapur.</div>
         </div>
       </div>
     </div>
     <div class="split-right">
       <div class="sr-title">KATEGORI MENU</div>
-      <div class="mock-row red"><span class="mr-num">🍽️</span>Makanan Berat<span class="mr-tag tag-red">9 item</span></div>
+      <div class="mock-row red"><span class="mr-num">🍽️</span>Makanan Berat<span class="mr-tag tag-red">11 item</span></div>
       <div class="mock-row or"><span class="mr-num">🍟</span>Snack & Dimsum<span class="mr-tag tag-or">14 item</span></div>
-      <div class="mock-row bl"><span class="mr-num">➕</span>Additional<span class="mr-tag tag-bl">7 item</span></div>
-      <div style="height:1px;background:rgba(255,255,255,.06);margin:12px 0;"></div>
-      <div class="sr-title">TAMBAH MANUAL</div>
-      <div style="font-size:11px;color:var(--mt);line-height:1.6;">Jika menu tidak ada di daftar, ketik nama item di bagian <b style="color:#fff;">Tambah Item Manual</b> → isi qty → tap + Tambah</div>
+      <div class="mock-row" style="background:rgba(167,139,250,.08);"><span class="mr-num" style="color:#a78bfa;">☕</span>Minuman<span class="mr-tag" style="background:rgba(167,139,250,.15);color:#a78bfa;">29 item</span></div>
+      <div class="mock-row" style="background:rgba(167,139,250,.08);"><span class="mr-num" style="color:#a78bfa;">➕</span>Additional (Bar)<span class="mr-tag" style="background:rgba(167,139,250,.15);color:#a78bfa;">7 item</span></div>
+      <div style="height:1px;background:rgba(255,255,255,.06);margin:10px 0;"></div>
+      <div style="font-size:10px;letter-spacing:1px;color:#a78bfa;margin-bottom:6px;">🍹 ITEM BAR (SKIP DAPUR)</div>
+      <div style="font-size:11px;color:var(--mt);line-height:1.6;">Minuman + Additional (Ice Cream, Air Mineral, Espresso, Sirup) langsung ke <b style="color:var(--gn);">Siap Antar</b> tanpa proses dapur.</div>
     </div>
   </div>
 </div>
 
-<!-- ══ PAGE 4: SIAP ANTAR ══ -->
+<!-- ══ PAGE 4: MINUMAN & BAR ITEMS ══ -->
+<div class="page" data-color="or">
+  <div style="max-width:640px;width:100%;">
+    <div class="tag" style="color:#a78bfa;">04 — Bar</div>
+    <div class="big-title">MINUMAN &amp;<br><span style="color:#a78bfa;">BAR ITEMS</span></div>
+    <div class="desc">Item minuman dan beberapa Additional langsung <b style="color:var(--gn);">siap antar</b> — tidak diproses dapur sama sekali.</div>
+    <div class="steps-grid">
+      <div class="step-card or">
+        <div class="step-num-big" style="color:#a78bfa;">🍹</div>
+        <div class="step-name">Skip Dapur Otomatis</div>
+        <div class="step-info">Jika semua item di keranjang adalah minuman/bar, pesanan langsung masuk Siap Antar — tanpa notif ke dapur.</div>
+      </div>
+      <div class="step-card or">
+        <div class="step-num-big">🍳</div>
+        <div class="step-name">Campur Makanan</div>
+        <div class="step-info">Jika ada makanan + minuman, pesanan tetap ke dapur. Di Siap Antar, hanya makanan yang ditampilkan.</div>
+      </div>
+      <div class="step-card gn">
+        <div class="step-num-big">📋</div>
+        <div class="step-name">Item Bar (Skip Dapur)</div>
+        <div class="step-info">Semua Minuman (29 item) + Ice Cream, Air Mineral, Espresso Arabica, Espresso Robusta, Sirup All Varian.</div>
+      </div>
+      <div class="step-card bl">
+        <div class="step-num-big">🏷️</div>
+        <div class="step-name">Di Layar Dapur</div>
+        <div class="step-info">Item bar tampil dengan label "🍹 bar" dan tidak bisa dicentang. Dapur hanya fokus ke makanan.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 5: SIAP ANTAR ══ -->
 <div class="page" data-color="gn">
   <div style="max-width:640px;width:100%;">
-    <div class="tag" style="color:var(--gn);">04 — Kasir</div>
+    <div class="tag" style="color:var(--gn);">05 — Kasir</div>
     <div class="big-title">TAB SIAP<br>ANTAR</div>
     <div class="desc">Saat dapur selesai memasak, bell berbunyi dan tab Siap Antar aktif otomatis.</div>
     <div class="steps-grid">
@@ -427,7 +472,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <div class="step-card or">
         <div class="step-num-big">🛵</div>
         <div class="step-name">Antar Sebagian</div>
-        <div class="step-info">Jika hanya sebagian item siap, tap ANTAR SEBAGIAN. Dapur lanjut masak sisa.</div>
+        <div class="step-info">Jika hanya sebagian makanan siap, tap ANTAR SEBAGIAN. Dapur lanjut masak sisa. Minuman tidak ikut ditampilkan.</div>
       </div>
       <div class="step-card gn">
         <div class="step-num-big">✓</div>
@@ -443,10 +488,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   </div>
 </div>
 
-<!-- ══ PAGE 5: DAPUR - MASUK ══ -->
+<!-- ══ PAGE 6: DAPUR - MASUK ══ -->
 <div class="page" data-color="or">
   <div style="max-width:640px;width:100%;">
-    <div class="tag" style="color:var(--or);">05 — Dapur</div>
+    <div class="tag" style="color:var(--or);">06 — Dapur</div>
     <div class="big-title">PESANAN<br>MASUK</div>
     <div class="desc">Panduan untuk layar dapur dari pesanan baru hingga selesai dimasak.</div>
     <div class="steps-grid">
@@ -474,10 +519,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   </div>
 </div>
 
-<!-- ══ PAGE 6: TIMER ══ -->
+<!-- ══ PAGE 7: TIMER ══ -->
 <div class="page" data-color="or">
   <div style="max-width:600px;width:100%;">
-    <div class="tag" style="color:var(--or);">06 — Timer</div>
+    <div class="tag" style="color:var(--or);">07 — Timer</div>
     <div class="big-title">ARTI WARNA<br>TIMER</div>
     <div class="desc">Timer di dapur dan kasir berubah warna otomatis sebagai peringatan.</div>
     <div class="timer-row">
@@ -508,10 +553,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   </div>
 </div>
 
-<!-- ══ PAGE 7: MENU STOCK ══ -->
+<!-- ══ PAGE 8: MENU STOCK ══ -->
 <div class="page" data-color="gn">
   <div style="max-width:640px;width:100%;">
-    <div class="tag" style="color:var(--gn);">07 — Fitur Baru</div>
+    <div class="tag" style="color:var(--gn);">08 — Fitur Baru</div>
     <div class="big-title">MENU STOCK<br>READY / NOT READY</div>
     <div class="desc">Dapur bisa atur status setiap menu. Kasir otomatis melihat mana yang tidak tersedia.</div>
     <div class="steps-grid">
@@ -539,10 +584,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   </div>
 </div>
 
-<!-- ══ PAGE 8: PRINT ══ -->
+<!-- ══ PAGE 9: PRINT ══ -->
 <div class="page" data-color="bl">
   <div style="max-width:560px;width:100%;text-align:center;">
-    <div class="tag" style="color:var(--bl);justify-content:center;">08 — Fitur Lain</div>
+    <div class="tag" style="color:var(--bl);justify-content:center;">09 — Fitur Lain</div>
     <div class="big-title">CETAK STRUK<br>& FITUR LAIN</div>
     <div class="desc" style="margin:0 auto 32px;">Fitur-fitur tambahan yang tersedia di sistem DiPojok.</div>
     <div class="steps-grid" style="text-align:left;">

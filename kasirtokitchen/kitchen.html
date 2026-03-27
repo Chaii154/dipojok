@@ -218,7 +218,40 @@ body{font-family:'Montserrat',sans-serif;background:var(--bk);color:var(--tx);mi
 .et{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;margin-bottom:6px;}
 .es{font-size:12px;letter-spacing:1px;}
 
-/* PRINT MODAL */
+/* BAR item — minuman, otomatis done oleh bar */
+.bar-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:8px;font-weight:700;letter-spacing:1px;
+  color:#000;background:#a78bfa;
+  padding:2px 7px;border-radius:10px;
+  flex-shrink:0;white-space:nowrap;
+  text-transform:uppercase;
+}
+.ci li.item-bar{
+  background:rgba(167,139,250,.07);
+  border-radius:4px;
+  opacity:0.75;
+}
+.ci li.item-bar .in{
+  color:rgba(167,139,250,.9);
+  text-decoration:line-through;
+  font-style:italic;
+}
+.ci li.item-bar .iq{
+  color:rgba(167,139,250,.7);
+}
+.bar-chk{
+  width:36px;height:36px;
+  border-radius:8px;
+  background:#a78bfa;
+  color:#000;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;
+  flex-shrink:0;
+  cursor:default;
+}
+
+
 .mover{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:20px;}
 .mover.open{display:flex;}
 .mbox{background:var(--g2);border:1px solid var(--br);border-radius:6px;padding:22px;max-width:450px;width:100%;max-height:90vh;overflow-y:auto;}
@@ -725,8 +758,8 @@ function togItem(orderKey, idx){
   var order = orders.find(function(o){return o._key===orderKey;});
   if(!order) return;
   var item = (order.items||[])[idx];
-  // Block toggle if already served or already delivered to table
-  if(item && (item.done || item.delivered)) return;
+  // Block toggle if already served, delivered, or a bar item
+  if(item && (item.done || item.delivered || isBarItem(item.name))) return;
 
   if(!itemChecks[orderKey]) itemChecks[orderKey]={};
   itemChecks[orderKey][idx] = !itemChecks[orderKey][idx];
@@ -742,20 +775,22 @@ function togItem(orderKey, idx){
 }
 
 function getCheckedCount(orderKey, items){
-  // Count: already-served (item.done) + newly checked in session
+  // Hanya hitung item NON-minuman (makanan) — minuman dikerjakan bar
   var checks = itemChecks[orderKey]||{};
   var count = 0;
   (items||[]).forEach(function(item,i){
+    if(isBarItem(item.name)) return; // skip minuman
     if(item.done || checks[i]) count++;
   });
   return count;
 }
 
 function getNewlyChecked(orderKey, items){
-  // Only count freshly checked (not already served)
+  // Hanya item NON-minuman yang bisa dicentang dapur
   var checks = itemChecks[orderKey]||{};
   var count = 0;
   (items||[]).forEach(function(item,i){
+    if(isBarItem(item.name)) return; // skip minuman
     if(!item.done && checks[i]) count++;
   });
   return count;
@@ -767,7 +802,8 @@ function updateProgressBar(orderKey){
   var order = orders.find(function(o){return o._key===orderKey;});
   if(!order) return;
   var items = order.items||[];
-  var total = items.length;
+  var foodItems = items.filter(function(it){return !isBarItem(it.name);});
+  var total = foodItems.length;
   var checked = getCheckedCount(orderKey, items);
   var fill = card.querySelector('.progress-fill');
   if(fill) fill.style.width = (total>0 ? Math.round(checked/total*100) : 0)+'%';
@@ -779,7 +815,8 @@ function updateCardFooter(orderKey){
   var order = orders.find(function(o){return o._key===orderKey;});
   if(!order) return;
   var items = order.items||[];
-  var total = items.length;
+  var foodItems = items.filter(function(it){return !isBarItem(it.name);});
+  var total = foodItems.length;
   var newlyChecked = getNewlyChecked(orderKey, items);
   var totalChecked = getCheckedCount(orderKey, items);
   var sajRow = card.querySelector('.sajikan-row');
@@ -797,10 +834,10 @@ function updateCardFooter(orderKey){
     btnAll.style.opacity = newlyChecked>0 ? '1':'0.5';
   }
 
-  // Partial badge
+  // Partial badge — hanya hitung makanan
   var pbadge = card.querySelector('.partial-badge');
   if(pbadge){
-    var alreadyServedCount = items.filter(function(it){return it.done || it.delivered;}).length;
+    var alreadyServedCount = foodItems.filter(function(it){return it.done || it.delivered;}).length;
     if(alreadyServedCount>0 && alreadyServedCount<total){
       pbadge.textContent = alreadyServedCount+' dari '+total+' sudah dikirim';
       pbadge.style.display='inline-block';
@@ -823,12 +860,19 @@ function sajikanChecked(orderKey){
 
   // Merge: already served + newly checked (keep delivered flag intact)
   var newItems = items.map(function(item,i){
-    if(item.delivered) return Object.assign({},item); // already delivered, don't touch
+    if(item.delivered) return Object.assign({},item);
+    if(isBarItem(item.name)) return Object.assign({},item); // minuman tidak disentuh dapur
     return Object.assign({},item, {done: item.done || (!item.done && !!checks[i])});
   });
 
-  var totalServed = newItems.filter(function(it){return it.done || it.delivered;}).length;
-  var allDone = totalServed === items.length;
+  // allDone: semua MAKANAN (bukan minuman) sudah selesai
+  var foodItems = items.filter(function(it){return !isBarItem(it.name);});
+  var foodDone = foodItems.every(function(it,i){
+    var idx = items.indexOf(it);
+    return newItems[idx].done || newItems[idx].delivered;
+  });
+  var allDone = foodItems.length===0 || foodDone;
+
   var patch = { items: newItems };
   if(allDone){
     patch.kitchenStatus = 'done';
@@ -836,10 +880,9 @@ function sajikanChecked(orderKey){
     patch.doneAt = Date.now();
   } else {
     patch.kitchenStatus = 'cooking';
-    patch.partialCount = totalServed;
+    patch.partialCount = newItems.filter(function(it){return !isBarItem(it.name)&&(it.done||it.delivered);}).length;
   }
 
-  // Clear only the newly-checked flags (keep locks for served items via item.done)
   itemChecks[orderKey] = {};
 
   doUpdate(orderKey, patch, function(err){
@@ -847,7 +890,7 @@ function sajikanChecked(orderKey){
     if(allDone){
       flash('✅ Pesanan #'+order.orderNumber+' — MEJA '+order.table+' SEMUA SIAP!','gn');
     } else {
-      flash('🛵 '+newlyChecked+' item MEJA '+order.table+' siap diantar! ('+totalServed+'/'+items.length+' total)','gn');
+      flash('🛵 '+newlyChecked+' item MEJA '+order.table+' siap diantar!','gn');
     }
   });
 }
@@ -857,8 +900,8 @@ function sajikanSemua(orderKey){
   if(!order) return;
   var items = order.items||[];
   if(!itemChecks[orderKey]) itemChecks[orderKey]={};
-  // Only check items that haven't been served or delivered yet
-  items.forEach(function(item,i){ if(!item.done && !item.delivered) itemChecks[orderKey][i]=true; });
+  // Only check items that haven't been served, delivered, or are bar items
+  items.forEach(function(item,i){ if(!item.done && !item.delivered && !isBarItem(item.name)) itemChecks[orderKey][i]=true; });
   sajikanChecked(orderKey);
 }
 
@@ -899,7 +942,8 @@ function doReset(){
 function renderKitchen(){
   var pending=orders.filter(function(o){return o.kitchenStatus==='pending';});
   var cooking=orders.filter(function(o){return o.kitchenStatus==='cooking';});
-  var done=orders.filter(function(o){return o.kitchenStatus==='done'||o.kitchenStatus==='delivered';}).slice(-6);
+  // Excludes drinkOnly orders — mereka tidak diproses dapur
+  var done=orders.filter(function(o){return (o.kitchenStatus==='done'||o.kitchenStatus==='delivered')&&!o.drinkOnly;}).slice(-6);
 
   if(!pending.length&&!cooking.length&&!done.length){
     document.getElementById('KM').innerHTML='<div class="ek" id="dapurSiapEl"><div class="ds-wrap"><div class="ds-emote">🍽️</div><div class="ds-title">DAPUR SIAP</div><div class="ds-sub">Menunggu pesanan dari kasir<span class=\"ds-dot\">.</span><span class=\"ds-dot\">.</span><span class=\"ds-dot\">.</span></div></div></div>';
@@ -944,8 +988,9 @@ function buildCard(o){
 
   var checks = itemChecks[k]||{};
   var items = o.items||[];
-  // Count items: already served (item.done) + newly checked
-  var alreadyServedCount = items.filter(function(it){return it.done;}).length;
+  var foodItems = items.filter(function(it){return !isBarItem(it.name);});
+  // Count items: hanya makanan (bukan minuman bar)
+  var alreadyServedCount = foodItems.filter(function(it){return it.done;}).length;
   var newlyCheckedCount = getNewlyChecked(k, items);
   var totalCheckedCount = alreadyServedCount + newlyCheckedCount;
 
@@ -954,9 +999,11 @@ function buildCard(o){
     var alreadyServed = !!item.done;
     // item.delivered = already sent to table via partial delivery from kasir
     var alreadyDelivered = !!item.delivered;
+    // BAR item — minuman, otomatis selesai oleh bar
+    var barItem = isBarItem(item.name);
     // checks[i] = newly checked in current session (not yet sent)
-    var newlyChecked = ic && !alreadyServed && !alreadyDelivered && !!checks[i];
-    var itemDone = alreadyServed || newlyChecked;
+    var newlyChecked = ic && !alreadyServed && !alreadyDelivered && !barItem && !!checks[i];
+    var itemDone = alreadyServed || newlyChecked || barItem;
     var ckHtml = '';
 
     // Already delivered to table by kasir partial — show SUDAH DI ANTAR badge
@@ -965,6 +1012,15 @@ function buildCard(o){
         +'<span class="iq">'+item.qty+'x</span>'
         +'<span class="in">'+item.name+'</span>'
         +'<span style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--bl);background:rgba(59,130,246,.15);padding:2px 7px;border-radius:10px;flex-shrink:0;white-space:nowrap;">SUDAH DI ANTAR</span>'
+        +'</li>';
+    }
+
+    // BAR item — tampilkan teks biasa saja, dikerjakan bar (tidak ikut centang dapur)
+    if(barItem){
+      return '<li data-idx="'+i+'" style="opacity:0.5;">'
+        +'<span class="iq" style="color:var(--mt);">'+item.qty+'x</span>'
+        +'<span class="in" style="color:var(--mt);font-style:italic;">'+item.name+'</span>'
+        +'<span style="font-size:9px;letter-spacing:1px;color:var(--mt);flex-shrink:0;">🍹 bar</span>'
         +'</li>';
     }
 
@@ -994,9 +1050,9 @@ function buildCard(o){
 
   var nh=o.noted?'<div class="cnote">📝 '+o.noted+'</div>':'';
 
-  // Progress bar (cooking only) — show total served / total items
+  // Progress bar (cooking only) — hanya hitung makanan, bukan minuman bar
   var progressH = ic
-    ? '<div class="progress-bar"><div class="progress-fill" style="width:'+(items.length>0?Math.round(totalCheckedCount/items.length*100):0)+'%"></div></div>'
+    ? '<div class="progress-bar"><div class="progress-fill" style="width:'+(foodItems.length>0?Math.round(totalCheckedCount/foodItems.length*100):0)+'%"></div></div>'
     : '';
 
   // Footer buttons
@@ -1016,12 +1072,12 @@ function buildCard(o){
       +'<button class="bp" onclick="openPM(\''+k+'\')" style="width:100%;">🖨️ Cetak Struk</button>'
       +'</div>';
     } else if(ic){
-    var allChecked = totalCheckedCount===items.length && items.length>0;
+    var allChecked = totalCheckedCount===foodItems.length && foodItems.length>0;
     fh='<div class="sajikan-row">'
       +'<button class="btn-sajikan" onclick="sajikanChecked(\''+k+'\')" '+(newlyCheckedCount===0?'disabled':'')+' title="Sajikan item yang baru dicentang">'
-      +'✓ Sajikan <span class="saj-count">'+totalCheckedCount+'/'+items.length+'</span>'
+      +'✓ Sajikan <span class="saj-count">'+totalCheckedCount+'/'+foodItems.length+'</span>'
       +'</button>'
-      +'<button class="btn-sajikan-all" onclick="sajikanSemua(\''+k+'\')" title="Sajikan semua item sekaligus" style="opacity:'+(newlyCheckedCount>0||alreadyServedCount<items.length?'1':'0.5')+'">'
+      +'<button class="btn-sajikan-all" onclick="sajikanSemua(\''+k+'\')" title="Sajikan semua item sekaligus" style="opacity:'+(newlyCheckedCount>0||alreadyServedCount<foodItems.length?'1':'0.5')+'">'
       +(allChecked?'✅ SEMUA SIAP':'✓ SEMUA')
       +'</button>'
       +'<button class="bp" onclick="openPM(\''+k+'\')">🖨️</button>'
@@ -1061,7 +1117,8 @@ function buildCard(o){
 function updateStats(){
   document.getElementById('QP').textContent=orders.filter(function(o){return o.kitchenStatus==='pending';}).length;
   document.getElementById('QC').textContent=orders.filter(function(o){return o.kitchenStatus==='cooking';}).length;
-  document.getElementById('QD').textContent=orders.filter(function(o){return o.kitchenStatus==='done'||o.kitchenStatus==='delivered';}).length;
+  // Exclude drinkOnly — tidak diproses dapur
+  document.getElementById('QD').textContent=orders.filter(function(o){return (o.kitchenStatus==='done'||o.kitchenStatus==='delivered')&&!o.drinkOnly;}).length;
 }
 
 // Live timer — only update timer elements, no full re-render
@@ -1265,6 +1322,21 @@ else setMode('localhost');
 ══════════════════════════════════════════ */
 var MENU_STOCK_KEY = 'dipojok_menu_stock';
 
+// ── DAFTAR MINUMAN (dibuat oleh BAR, otomatis selesai di dapur) ──
+var BAR_ITEMS = [
+  'Americano','On The Rocks','Cafe Latte','Boen Boen','Split','Affogato',
+  'Caramel','Salted Caramel','Shortbread','Roasted Almond','Cotton Brulee',
+  'Butterscotch','Popcorn','Walnut Brownie','Cheesecake','Aren','Banana','Vanilla',
+  'Wild Berries','Tropical Guava','Roseberry Coffee','Green Apple Coffee',
+  'Street Sweetness','Chilled Guava',
+  'Matcha','Red Velvet','Chocolate','Cookies and Cream','Coconut Candy Cream Cheese',
+  // Additional — tidak perlu dapur
+  'Ice Cream','Air Mineral','Espresso Arabica','Espresso Robusta','Sirup All Varian'
+];
+function isBarItem(name){
+  return BAR_ITEMS.some(function(b){ return b.toLowerCase()===name.toLowerCase(); });
+}
+
 var STOCK_MENU = {
   makanan:{label:'🍽️ Makanan Berat',items:[
     'Ayam Kalasan','Ayam Cheese','Ayam Mentega',
@@ -1282,9 +1354,7 @@ var STOCK_MENU = {
     'Dimsum Ayam','Dimsum Party'
   ]},
   additional:{label:'➕ Additional',items:[
-    'Nasi','Telur','Ice Cream',
-    'Air Mineral','Espresso Arabica',
-    'Espresso Robusta','Sirup All Varian'
+    'Nasi','Telur'
   ]}
 };
 

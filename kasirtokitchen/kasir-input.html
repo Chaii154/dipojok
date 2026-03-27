@@ -154,7 +154,7 @@ textarea{resize:vertical;min-height:46px;}
 .tab-btn:hover{color:var(--wh);}
 .tab-btn.on{color:var(--wh);border-bottom-color:var(--red);}
 .tab-btn.on.sa-tab{border-bottom-color:var(--gn);}
-.tab-btn.on.rw-tab{border-bottom-color:var(--bl);}
+
 .tab-badge{background:var(--red);color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;}
 .tab-badge.gn{background:var(--gn);color:#000;}
 .tab-badge.bl{background:var(--bl);}
@@ -214,7 +214,6 @@ textarea{resize:vertical;min-height:46px;}
 .btn-antar:hover{background:#1db954;transform:scale(1.04);box-shadow:0 4px 16px rgba(37,211,102,.4);}
 .btn-antar.btn-antar-partial{background:var(--or);color:#000;}
 .btn-antar.btn-antar-partial:hover{background:#e67e00;box-shadow:0 4px 16px rgba(255,140,0,.4);}
-.sa-empty{text-align:center;padding:40px 0;color:var(--mt);}
 .sa-empty-icon{font-size:48px;margin-bottom:8px;opacity:.28;}
 .sa-empty-txt{font-size:11px;letter-spacing:1px;}
 
@@ -550,6 +549,8 @@ body.light .rw-item-row{background:rgba(59,130,246,.06);}
         <div class="ec"><div class="et">Memuat riwayat...</div></div>
       </div>
     </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -647,6 +648,18 @@ var MENU = {
     {n:'Dimsum Mentai',p:35000},{n:'Dimsum Mix',p:35000},
     {n:'Dimsum Ayam',p:30000},{n:'Dimsum Party',p:65000}
   ]},
+  minuman:{label:'☕ Minuman',items:[
+    {n:'Americano',p:30000,sub:'Coffee'},{n:'On The Rocks',p:27000,sub:'Coffee'},{n:'Cafe Latte',p:33000,sub:'Coffee'},
+    {n:'Boen Boen',p:28000,sub:'Coffee'},{n:'Split',p:35000,sub:'Coffee'},{n:'Affogato',p:32000,sub:'Coffee'},
+    {n:'Caramel',p:28000,sub:'Coffee Susu'},{n:'Salted Caramel',p:28000,sub:'Coffee Susu'},{n:'Shortbread',p:28000,sub:'Coffee Susu'},
+    {n:'Roasted Almond',p:28000,sub:'Coffee Susu'},{n:'Cotton Brulee',p:28000,sub:'Coffee Susu'},{n:'Butterscotch',p:28000,sub:'Coffee Susu'},
+    {n:'Popcorn',p:28000,sub:'Coffee Susu'},{n:'Walnut Brownie',p:28000,sub:'Coffee Susu'},{n:'Cheesecake',p:28000,sub:'Coffee Susu'},
+    {n:'Aren',p:28000,sub:'Coffee Susu'},{n:'Banana',p:28000,sub:'Coffee Susu'},{n:'Vanilla',p:28000,sub:'Coffee Susu'},
+    {n:'Wild Berries',p:28000,sub:'Mocktail'},{n:'Tropical Guava',p:28000,sub:'Mocktail'},{n:'Roseberry Coffee',p:30000,sub:'Mocktail'},
+    {n:'Green Apple Coffee',p:30000,sub:'Mocktail'},{n:'Street Sweetness',p:28000,sub:'Mocktail'},{n:'Chilled Guava',p:28000,sub:'Mocktail'},
+    {n:'Matcha',p:28000,sub:'Non Coffee'},{n:'Red Velvet',p:28000,sub:'Non Coffee'},{n:'Chocolate',p:28000,sub:'Non Coffee'},
+    {n:'Cookies and Cream',p:28000,sub:'Non Coffee'},{n:'Coconut Candy Cream Cheese',p:28000,sub:'Non Coffee'}
+  ]},
   additional:{label:'➕ Additional',items:[
     {n:'Nasi',p:5000},{n:'Telur',p:5000},{n:'Ice Cream',p:10000},
     {n:'Air Mineral',p:5000},{n:'Espresso Arabica',p:15000},
@@ -654,7 +667,24 @@ var MENU = {
   ]}
 };
 
-// ══════════════════════════════════════════
+// ── DAFTAR MINUMAN (bar) — sama dengan kitchen.html ──
+var BAR_ITEMS_KASIR = [
+  'Americano','On The Rocks','Cafe Latte','Boen Boen','Split','Affogato',
+  'Caramel','Salted Caramel','Shortbread','Roasted Almond','Cotton Brulee',
+  'Butterscotch','Popcorn','Walnut Brownie','Cheesecake','Aren','Banana','Vanilla',
+  'Wild Berries','Tropical Guava','Roseberry Coffee','Green Apple Coffee',
+  'Street Sweetness','Chilled Guava',
+  'Matcha','Red Velvet','Chocolate','Cookies and Cream','Coconut Candy Cream Cheese',
+  // Additional — tidak perlu dapur
+  'Ice Cream','Air Mineral','Espresso Arabica','Espresso Robusta','Sirup All Varian'
+];
+function isBarItemKasir(name){
+  return BAR_ITEMS_KASIR.some(function(b){ return b.toLowerCase()===(name||'').toLowerCase(); });
+}
+function isOnlyDrinks(items){
+  return items.length>0 && items.every(function(i){ return isBarItemKasir(i.name); });
+}
+
 // STATE
 // ══════════════════════════════════════════
 var cart=[], activeCat='makanan', activeTab='keranjang';
@@ -849,27 +879,32 @@ function processOrders(orders){
   orders.forEach(function(o){
     var ks=o.kitchenStatus;
 
-    // Notif: partial sajikan — cooking tapi ada item.done baru
+    // Notif: partial sajikan — cooking tapi ada item MAKANAN yang done
     if(ks==='cooking'){
-      var doneItems=(o.items||[]).filter(function(i){return i.done;});
+      var foodItemsOnly=(o.items||[]).filter(function(i){return !isBarItemKasir(i.name);});
+      var doneItems=foodItemsOnly.filter(function(i){return i.done;});
       var doneCount=doneItems.length;
-      var totalCount=(o.items||[]).length;
+      var totalCount=foodItemsOnly.length;
       var partialKey=o._key+'_partial_'+doneCount;
       if(doneCount>0 && !knownDone[partialKey]){
         knownDone[partialKey]=true;
-        notif('🛵 SIAP SEBAGIAN! MEJA '+o.table+' — '+doneCount+'/'+totalCount+' item siap','or');
+        notif('🛵 SIAP SEBAGIAN! MEJA '+o.table+' — '+doneCount+'/'+totalCount+' makanan siap','or');
         snd('bell');
         switchTab('siapantar');
       }
     }
 
-    // Notif: semua item selesai (done)
+    // Notif: semua makanan selesai (done) atau pesanan minuman saja
     if(ks==='done' && !knownDone[o._key+'_done']){
       knownDone[o._key+'_done']=true;
-      notif('✅ PESANAN SELESAI! MEJA '+o.table+' — Pesanan #'+o.orderNumber+' siap sajikan','gn');
+      var msg=o.drinkOnly
+        ? '🍹 MINUMAN SIAP! MEJA '+o.table+' — Pesanan #'+o.orderNumber
+        : '✅ PESANAN SELESAI! MEJA '+o.table+' — Pesanan #'+o.orderNumber+' siap sajikan';
+      notif(msg,'gn');
       snd('bell');
       switchTab('siapantar');
     }
+
   });
 
   renderSiapAntar(orders);
@@ -882,7 +917,6 @@ function processOrders(orders){
 // ══════════════════════════════════════════
 function getLO(){ try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]');}catch(e){return [];} }
 function saveLO(a){ try{localStorage.setItem(LS_KEY,JSON.stringify(a));}catch(e){} }
-
 function startLS(){
   setStatus('💾 Mode Offline (LocalStorage)','ok');
   var lo=getLO(); lo.sort(function(a,b){return (a.timestamp||0)-(b.timestamp||0);});
@@ -1010,15 +1044,19 @@ function buildMenu(){
     var added=cart.some(function(c){return c.name===m.n;});
     var nm=m.n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     var ready = stock[m.n] !== false;
+    var catLabel = m.sub ? m.sub : MENU[activeCat].label;
+    var priceHTML = m.p > 0 ? '<div class="mip">'+rp(m.p)+'</div>' : '';
     if(ready){
       h2+='<button class="mib '+(added?'added':'')+'" onclick="addMenu(\''+nm+'\','+m.p+')">'
-         +'<div class="mic">'+MENU[activeCat].label+'</div>'
+         +'<div class="mic">'+catLabel+'</div>'
          +'<div class="min">'+m.n+'</div>'
+         +priceHTML
          +'</button>';
     } else {
       h2+='<button class="mib mib-notready" disabled>'
-         +'<div class="mic">'+MENU[activeCat].label+'</div>'
+         +'<div class="mic">'+catLabel+'</div>'
          +'<div class="min">'+m.n+'</div>'
+         +priceHTML
          +'<div class="mib-nr-badge">❌ NOT READY</div>'
          +'</button>';
     }
@@ -1090,69 +1128,61 @@ function renderCart(){
 // SIAP ANTAR
 // ══════════════════════════════════════════
 function renderSiapAntar(orders){
-  // Partial: masih cooking tapi ada item yang done
+  var el=document.getElementById('SA_LIST');
   var partialOrders=orders.filter(function(o){
     return o.kitchenStatus==='cooking' && (o.items||[]).some(function(i){return i.done;});
   });
-  // Fully done
   var doneOrders=orders.filter(function(o){ return o.kitchenStatus==='done'; });
-
   var readyOrders=partialOrders.concat(doneOrders);
-  var el=document.getElementById('SA_LIST');
-
   if(!readyOrders.length){
     el.innerHTML='<div class="sa-empty"><div class="sa-empty-icon">🛵</div><div class="sa-empty-txt">Belum ada pesanan siap diantar</div></div>';
     return;
   }
-
+  function itemRow(item, cls){
+    var badge = (cls.indexOf('delivered-row')!==-1)
+      ? '<span style="margin-left:auto;font-size:9px;font-weight:700;letter-spacing:1px;color:var(--bl);background:rgba(59,130,246,.15);padding:2px 7px;border-radius:10px;white-space:nowrap;">SUDAH DI ANTAR</span>'
+      : '';
+    return '<div class="sa-item-row '+cls+'">'
+      +'<span class="sa-item-qty">'+item.qty+'x</span>'
+      +'<span style="flex:1;">'+item.name+'</span>'
+      +badge+'</div>';
+  }
   var h='';
   readyOrders.slice().reverse().forEach(function(o){
-    var isPartial = o.kitchenStatus==='cooking';
-    var doneItems=(o.items||[]).filter(function(i){return i.done;});
-    var totalItems=(o.items||[]).length;
+    var isPartial=o.kitchenStatus==='cooking';
+    // Hanya tampilkan item MAKANAN (non-minuman) di siap antar
+    var allFoodItems=(o.items||[]).filter(function(i){return !isBarItemKasir(i.name);});
+    var drinkOnlyCard=allFoodItems.length===0; // semua item adalah minuman
+    // Untuk display: jika drink-only tampilkan minuman, jika ada makanan tampilkan makanan saja
+    var displayItems=drinkOnlyCard ? (o.items||[]) : allFoodItems;
+    var doneItems=allFoodItems.filter(function(i){return i.done;});
+    var totalItems=allFoodItems.length;
     var doneCount=doneItems.length;
-
-    // Items text: only the done ones for partial, all for fully done
-    // Render items as rows
-    function itemRow(item, cls){
-      var badge = (cls.indexOf('delivered-row')!==-1)
-        ? '<span style="margin-left:auto;font-size:9px;font-weight:700;letter-spacing:1px;color:var(--bl);background:rgba(59,130,246,.15);padding:2px 7px;border-radius:10px;white-space:nowrap;">SUDAH DI ANTAR</span>'
-        : '';
-      return '<div class="sa-item-row '+cls+'">'
-        +'<span class="sa-item-qty">'+item.qty+'x</span>'
-        +'<span style="flex:1;">'+item.name+'</span>'
-        +badge
-        +'</div>';
-    }
-    var allItemsHtml=(o.items||[]).map(function(i){
+    var allItemsHtml=displayItems.map(function(i){
       if(i.delivered) return itemRow(i,'delivered-row');
       if(i.done) return itemRow(i,'done-row');
       return itemRow(i,'');
     }).join('');
     var doneItsHtml=doneItems.map(function(i){ return itemRow(i,'done-row partial-done'); }).join('');
-    var remainItsHtml=(o.items||[]).filter(function(i){return !i.done&&!i.delivered;}).map(function(i){ return itemRow(i,'remain-row'); }).join('');
+    var remainItsHtml=allFoodItems.filter(function(i){return !i.done&&!i.delivered;}).map(function(i){ return itemRow(i,'remain-row'); }).join('');
     var ts=o.createdAt?new Date(o.createdAt).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'—';
-
     var waitSince=o.doneAt||o.partialDeliveredAt||o.timestamp||Date.now();
     var waitSec=Math.floor((Date.now()-waitSince)/1000);
     var waitMm=Math.floor(waitSec/60).toString().padStart(2,'0');
     var waitSs=(waitSec%60).toString().padStart(2,'0');
     var waitCls=waitSec>=1200?'tmr-late':waitSec>=600?'tmr-warn':'';
     h+='<div class="sa-card '+(isPartial?'sa-partial':'')+'">'
-      +'<div class="sa-head">'
-      +'<div>'
+      +'<div class="sa-head"><div>'
       +'<div class="sa-num">Pesanan #'+o.orderNumber
         +(isPartial?' <span class="sa-partial-badge">'+doneCount+'/'+totalItems+' item</span>':'')
       +'</div>'
       +'<div class="sa-meja">Meja '+o.table+'</div>'
       +'<div style="margin-top:3px;">'
       +'<div class="sa-wait-timer '+waitCls+'" id="sawt-'+o._key+'"><span style="font-size:9px;letter-spacing:1px;opacity:.7;">BUTUH DI ANTAR</span> ⏱ '+waitMm+':'+waitSs+'</div>'
-      +'</div>'
-      +'</div>'
+      +'</div></div>'
       +'<button class="btn-antar '+(isPartial?'btn-antar-partial':'')+'" onclick="markAntar(\''+o._key+'\')">'
       +(isPartial?'🛵 ANTAR SEBAGIAN':'✓ DIANTAR')
-      +'</button>'
-      +'</div>'
+      +'</button></div>'
       +(isPartial
         ?'<div class="sa-item-list">'+doneItsHtml+'</div>'
          +(remainItsHtml?'<div style="font-size:10px;letter-spacing:1px;color:var(--mt);margin:2px 0 2px;">MASIH MASAK:</div><div class="sa-item-list">'+remainItsHtml+'</div>':'')
@@ -1273,18 +1303,38 @@ function openStrukModal(){
   var meja=document.getElementById('iMeja').value.trim();
   if(!meja){ notif('❌ Isi nomor meja dulu!','rd'); return; }
   var num=getNextOrderNum();
+  var orderItems=cart.map(function(i){return {name:i.name,qty:i.qty,price:i.price};});
+  var drinkOnly=isOnlyDrinks(orderItems);
   pendingOrder={
     id:'ORD-'+String(num).padStart(4,'0'),orderNumber:num,
     table:meja, customer:document.getElementById('iCust').value.trim()||'—',
     noted:document.getElementById('iNote').value.trim()||'',
-    items:cart.map(function(i){return {name:i.name,qty:i.qty,price:i.price};}),
+    items:orderItems,
     total:cart.reduce(function(s,i){return s+(i.price*i.qty);},0),
-    status:'Baru',kitchenStatus:'pending',
+    status:drinkOnly?'Selesai':'Baru',
+    kitchenStatus:drinkOnly?'done':'pending',
+    drinkOnly:drinkOnly||undefined,
     createdAt:new Date().toISOString(),timestamp:Date.now()
   };
   curStrukTab='kasir';
   document.getElementById('ST0').classList.add('on'); document.getElementById('ST1').classList.remove('on');
   document.getElementById('PREV').innerHTML=buildStrukHTML(pendingOrder,'kasir');
+  // Update label tombol & sub berdasarkan jenis pesanan
+  var smsub=document.querySelector('#SMODAL .smsub');
+  var bprt=document.querySelector('#SMODAL .bprt');
+  var bskp=document.querySelector('#SMODAL .bskp');
+  var st1=document.getElementById('ST1');
+  if(pendingOrder.drinkOnly){
+    if(smsub) smsub.textContent='Pesanan minuman — langsung siap antar (tidak masuk dapur)';
+    if(bprt) bprt.innerHTML='🖨️ Cetak & Kirim';
+    if(bskp) bskp.innerHTML='✓ Kirim Tanpa Cetak';
+    if(st1) st1.style.display='none';
+  } else {
+    if(smsub) smsub.textContent='Cetak → struk kasir & dapur tercetak → pesanan masuk ke dapur';
+    if(bprt) bprt.innerHTML='🖨️ Cetak & Kirim ke Dapur';
+    if(bskp) bskp.innerHTML='✓ Kirim Tanpa Cetak';
+    if(st1) st1.style.display='';
+  }
   document.getElementById('SMODAL').classList.add('open');
 }
 
@@ -1303,6 +1353,8 @@ function closeStrukModal(){
   document.getElementById('SMODAL').classList.remove('open');
   document.querySelector('.bskp').style.display='';
   document.querySelector('.bprt').onclick=doBothPrint;
+  var st1=document.getElementById('ST1');
+  if(st1) st1.style.display='';
   if(!pendingOrder) { pendingOrder=null; return; }
   pendingOrder=null;
 }
@@ -1357,10 +1409,15 @@ function execPrint(content){
 function doBothPrint(){
   var o=pendingOrder; if(!o) return;
   execPrint(buildStrukHTML(o,'kasir'));
-  setTimeout(function(){
-    execPrint(buildStrukHTML(o,'dapur'));
+  if(o.drinkOnly){
+    // Minuman saja — tidak perlu struk dapur
     setTimeout(execSend,900);
-  },900);
+  } else {
+    setTimeout(function(){
+      execPrint(buildStrukHTML(o,'dapur'));
+      setTimeout(execSend,900);
+    },900);
+  }
 }
 
 function doSendOnly(){
@@ -1382,7 +1439,14 @@ function execSendDirect(order){
   sendOrder(order,function(err){
     btn.disabled=false; btn.innerHTML='🍳 KIRIM KE DAPUR';
     if(err){ notif('❌ Gagal: '+err.message,'rd'); return; }
-    notif('✅ Pesanan #'+order.orderNumber+' dikirim ke dapur!','gn');
+    if(order.drinkOnly && order._key){
+      // Pre-set knownDone agar processOrders tidak menembak notif kedua
+      knownDone[order._key+'_done']=true;
+    }
+    var sentMsg=order.drinkOnly
+      ? '🍹 Pesanan #'+order.orderNumber+' (minuman) langsung siap antar!'
+      : '✅ Pesanan #'+order.orderNumber+' dikirim ke dapur!';
+    notif(sentMsg,'gn');
     cart=[]; renderCart(); buildMenu();
     document.getElementById('iMeja').value='';
     document.getElementById('iCust').value='';
