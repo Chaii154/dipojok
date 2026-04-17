@@ -418,7 +418,11 @@ nav{
 }
 .btn-upload:hover{background:var(--red-light);}
 .btn-upload:disabled{opacity:0.4;cursor:not-allowed;}
-.upload-status{font-size:11px;color:rgba(255,255,255,0.4);text-align:center;margin-top:8px;letter-spacing:1px;}
+.ap-row input[type=date]{color-scheme:dark;}
+/* Delete thumb */
+#deletePhotoList::-webkit-scrollbar{width:3px;}
+#deletePhotoList::-webkit-scrollbar-thumb{background:var(--red);}
+
 
 /* Week management */
 .week-detail{background:rgba(0,0,0,0.25);border-radius:4px;padding:14px;margin-bottom:12px;}
@@ -656,16 +660,9 @@ footer{
     <div class="ap-section">
       <h4>📸 Upload Foto</h4>
       <div class="ap-row">
-        <label>Upload ke Hari</label>
-        <select id="uploadDay">
-          <option value="1">Hari 1</option>
-          <option value="2">Hari 2</option>
-          <option value="3">Hari 3</option>
-          <option value="4">Hari 4</option>
-          <option value="5">Hari 5</option>
-          <option value="6">Hari 6</option>
-          <option value="7">Hari 7</option>
-        </select>
+        <label>Tanggal Upload (Pilih dari Kalender)</label>
+        <input type="date" id="uploadDate" onchange="onUploadDateChange()" style="color-scheme:dark;">
+        <div class="modal-note" id="uploadDayNote" style="margin-top:6px;color:rgba(255,200,100,0.8);"></div>
       </div>
       <div class="drop-zone" id="dropZone">
         <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFileSelect(this.files)">
@@ -701,6 +698,23 @@ footer{
         </div>
       </div>
       <div id="resetStatus" style="font-size:11px;margin-top:10px;letter-spacing:1px;text-align:center;"></div>
+    </div>
+
+    <!-- Section 4: Hapus Foto -->
+    <div class="ap-section" id="deleteSection" style="display:none;">
+      <h4>🗑 Hapus Foto</h4>
+      <div class="ap-row">
+        <label>Pilih Tab/Hari</label>
+        <select id="deleteTabSelect" onchange="loadDeletePhotos()">
+          <option value="">-- Pilih Hari --</option>
+        </select>
+      </div>
+      <div id="deletePhotoList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;max-height:220px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button class="btn-danger" id="btnDeleteAllTab" onclick="deleteAllInTab()" style="flex:1;display:none;">🗑 Hapus Semua Tab Ini</button>
+        <button class="btn-danger" id="btnDeleteAllWeek" onclick="deleteAllWeek()" style="flex:1;background:rgba(180,0,0,0.2);">☠ Hapus Semua Foto</button>
+      </div>
+      <div id="deleteStatus" style="font-size:11px;margin-top:8px;letter-spacing:1px;text-align:center;"></div>
     </div>
 
   </div>
@@ -941,7 +955,8 @@ async function initGallery() {
   renderTabs(dayNum);
   renderGallery(activeDay);
   updateWeekStats(dayNum);
-}
+  // Auto-expire jika foto sudah >7 hari dan admin login
+  if (isAdmin) checkAndAutoExpire();
 
 function showLoadingState() {
   const gw = document.getElementById('galleryWrap');
@@ -995,7 +1010,16 @@ function updateWeekStats(dayNum) {
   const pct = Math.min(100, Math.round((dayNum / 7) * 100));
   document.getElementById('wdProgress').style.width = pct + '%';
   document.getElementById('wdTotal').textContent = totalPhotoCount + ' foto';
-  document.getElementById('uploadDay').value = String(Math.min(7, dayNum));
+  // Set default upload date to today if not yet set
+  const uploadDateEl = document.getElementById('uploadDate');
+  if (!uploadDateEl.value) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth()+1).padStart(2,'0');
+    const dd = String(today.getDate()).padStart(2,'0');
+    uploadDateEl.value = `${yyyy}-${mm}-${dd}`;
+    onUploadDateChange();
+  }
 }
 
 // ─── TABS ─────────────────────────────────────────────
@@ -1128,17 +1152,32 @@ function updateLightbox() {
 function lbPrev() { if (lightboxIdx > 0) { lightboxIdx--; updateLightbox(); } }
 function lbNext() { if (lightboxIdx < lightboxPhotos.length - 1) { lightboxIdx++; updateLightbox(); } }
 
-function lbDownload() {
+async function lbDownload() {
   const url = lightboxPhotos[lightboxIdx];
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `dipojok-photo-${lightboxIdx + 1}.jpg`;
-  a.target = '_blank';
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  showToast('📥 Mendownload foto...');
+  showToast('📥 Mengunduh foto...');
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `dipojok-photo-${lightboxIdx + 1}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
+    showToast('✅ Foto berhasil didownload!');
+  } catch(e) {
+    // fallback
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dipojok-photo-${lightboxIdx + 1}.jpg`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 }
 
 function setupKeyboard() {
@@ -1180,6 +1219,7 @@ function doLogin() {
     setTimeout(() => {
       document.getElementById('adminPanel').classList.add('open');
       if (weekConfig) updateWeekStats(Math.min(7, Math.floor((Date.now() - weekConfig.weekStart) / 86400000) + 1));
+      showDeleteSection();
     }, 300);
   } else {
     document.getElementById('loginError').style.display = 'block';
@@ -1223,10 +1263,60 @@ function handleFileSelect(files) {
   document.getElementById('uploadStatus').textContent = uploadFiles.length > 0 ? `${uploadFiles.length} foto siap diupload` : '';
 }
 
+function onUploadDateChange() {
+  const val = document.getElementById('uploadDate').value;
+  const noteEl = document.getElementById('uploadDayNote');
+  if (!val) { noteEl.textContent = ''; return; }
+  const dateObj = new Date(val + 'T00:00:00');
+  if (weekConfig && weekConfig.weekStart) {
+    const ws = new Date(weekConfig.weekStart);
+    // normalize both to midnight local
+    const wsDay = new Date(ws.getFullYear(), ws.getMonth(), ws.getDate());
+    const selDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    const diffMs = selDay - wsDay;
+    const diffDays = Math.round(diffMs / 86400000);
+    if (diffDays >= 0 && diffDays < 7) {
+      const dayNum = diffDays + 1;
+      const namaHari = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+      noteEl.textContent = `→ ${namaHari}, ${dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} = Hari ${dayNum} minggu ini`;
+      noteEl.style.color = 'rgba(100,255,150,0.9)';
+    } else if (diffDays < 0) {
+      noteEl.textContent = '⚠ Tanggal ini sebelum minggu aktif dimulai';
+      noteEl.style.color = 'rgba(255,180,80,0.9)';
+    } else {
+      noteEl.textContent = '⚠ Tanggal ini di luar 7 hari minggu aktif — akan masuk Hari 7';
+      noteEl.style.color = 'rgba(255,180,80,0.9)';
+    }
+  } else {
+    const namaHari = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+    noteEl.textContent = `${namaHari}, ${dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    noteEl.style.color = 'rgba(255,255,255,0.5)';
+  }
+}
+
+function getUploadDayFromDate() {
+  const val = document.getElementById('uploadDate').value;
+  if (!val) return null;
+  const dateObj = new Date(val + 'T00:00:00');
+  if (weekConfig && weekConfig.weekStart) {
+    const ws = new Date(weekConfig.weekStart);
+    const wsDay = new Date(ws.getFullYear(), ws.getMonth(), ws.getDate());
+    const selDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    const diffDays = Math.round((selDay - wsDay) / 86400000);
+    if (diffDays < 0) return 1;
+    if (diffDays >= 7) return 7;
+    return diffDays + 1;
+  }
+  // If no week config, use day of week: Mon=1...Sun=7
+  const dow = dateObj.getDay(); // 0=Sun,1=Mon...6=Sat
+  return dow === 0 ? 7 : dow;
+}
+
 async function doUpload() {
   if (!GH.token) { showToast('Masukkan GitHub Token dulu!', 'error'); return; }
   if (!uploadFiles.length) return;
-  const day = parseInt(document.getElementById('uploadDay').value);
+  const day = getUploadDayFromDate();
+  if (!day) { showToast('Pilih tanggal upload dulu!', 'error'); return; }
   const btn = document.getElementById('uploadBtn');
   const status = document.getElementById('uploadStatus');
   btn.disabled = true;
@@ -1249,12 +1339,15 @@ async function doUpload() {
   if (success > 0) {
     status.textContent = `✅ ${success} foto berhasil diupload!`;
     status.style.color = '#4ade80';
-    showToast(`✅ ${success} foto berhasil diupload ke Hari ${day}!`);
+    const uploadDateVal = document.getElementById('uploadDate').value;
+    const uploadDateLabel = uploadDateVal ? new Date(uploadDateVal+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}) : `Hari ${day}`;
+    showToast(`✅ ${success} foto berhasil diupload ke ${uploadDateLabel} (Hari ${day})!`);
     uploadFiles = [];
     document.getElementById('uploadPreview').innerHTML = '';
     document.getElementById('fileInput').value = '';
     // Refresh gallery
     await initGallery();
+    if (isAdmin) showDeleteSection();
   }
   if (fail > 0) {
     const errMsg = lastError ? `: ${lastError}` : '';
@@ -1311,7 +1404,141 @@ async function doResetWeek() {
   document.getElementById('confirmYes').disabled = false;
 }
 
-// ─── QR CODE ──────────────────────────────────────────
+// ─── DELETE MANAGEMENT ────────────────────────────────
+function showDeleteSection() {
+  const sec = document.getElementById('deleteSection');
+  sec.style.display = 'block';
+  // Populate tab select
+  const sel = document.getElementById('deleteTabSelect');
+  sel.innerHTML = '<option value="">-- Pilih Hari --</option>';
+  for (let d = 1; d <= 7; d++) {
+    const photos = allPhotos[`day${d}`] || [];
+    if (photos.length > 0) {
+      const weekStart = weekConfig ? weekConfig.weekStart : Date.now();
+      const dateObj = new Date(weekStart + (d - 1) * 86400000);
+      const namaHari = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+      const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+      sel.innerHTML += `<option value="${d}">Hari ${d} — ${namaHari} ${dateStr} (${photos.length} foto)</option>`;
+    }
+  }
+}
+
+function loadDeletePhotos() {
+  const day = parseInt(document.getElementById('deleteTabSelect').value);
+  const listEl = document.getElementById('deletePhotoList');
+  const btnAll = document.getElementById('btnDeleteAllTab');
+  if (!day || isNaN(day)) {
+    listEl.innerHTML = '';
+    btnAll.style.display = 'none';
+    return;
+  }
+  const photos = allPhotos[`day${day}`] || [];
+  btnAll.style.display = photos.length > 0 ? 'block' : 'none';
+  if (photos.length === 0) {
+    listEl.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,0.3);padding:8px;letter-spacing:1px;">Tidak ada foto di hari ini</div>';
+    return;
+  }
+  listEl.innerHTML = photos.map((p, i) =>
+    `<div style="position:relative;display:inline-block;">
+      <img src="${p.url}" style="width:72px;height:72px;object-fit:cover;border-radius:4px;border:2px solid rgba(255,255,255,0.1);" loading="lazy">
+      <button onclick="deleteSinglePhoto(${day}, ${i})" title="Hapus foto ini"
+        style="position:absolute;top:-6px;right:-6px;background:var(--red);border:none;color:white;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+    </div>`
+  ).join('');
+}
+
+async function deleteSinglePhoto(day, idx) {
+  if (!GH.token) { showToast('Token GitHub diperlukan!', 'error'); return; }
+  const photos = allPhotos[`day${day}`] || [];
+  const photo = photos[idx];
+  if (!photo) return;
+  const statusEl = document.getElementById('deleteStatus');
+  statusEl.textContent = `🗑 Menghapus ${photo.name}...`;
+  statusEl.style.color = 'rgba(255,255,255,0.4)';
+  const ok = await ghDelete(photo.path, photo.sha);
+  if (ok) {
+    showToast(`✅ Foto dihapus!`);
+    statusEl.textContent = '✅ Foto berhasil dihapus.';
+    statusEl.style.color = '#4ade80';
+    await initGallery();
+    showDeleteSection();
+    loadDeletePhotos();
+  } else {
+    statusEl.textContent = '❌ Gagal menghapus foto.';
+    statusEl.style.color = 'var(--red)';
+    showToast('❌ Gagal menghapus foto!', 'error');
+  }
+}
+
+async function deleteAllInTab() {
+  if (!GH.token) { showToast('Token GitHub diperlukan!', 'error'); return; }
+  const day = parseInt(document.getElementById('deleteTabSelect').value);
+  if (!day || isNaN(day)) { showToast('Pilih hari dulu!', 'error'); return; }
+  const photos = allPhotos[`day${day}`] || [];
+  if (!photos.length) { showToast('Tidak ada foto di hari ini.', 'error'); return; }
+  if (!confirm(`Hapus semua ${photos.length} foto di Hari ${day}? Tindakan ini tidak bisa dibatalkan.`)) return;
+  const statusEl = document.getElementById('deleteStatus');
+  let deleted = 0;
+  for (const photo of photos) {
+    statusEl.textContent = `🗑 Menghapus ${deleted+1}/${photos.length}...`;
+    const ok = await ghDelete(photo.path, photo.sha);
+    if (ok) deleted++;
+  }
+  statusEl.textContent = `✅ ${deleted} foto dihapus dari Hari ${day}.`;
+  statusEl.style.color = '#4ade80';
+  showToast(`✅ ${deleted} foto dihapus dari Hari ${day}!`);
+  await initGallery();
+  showDeleteSection();
+  document.getElementById('deletePhotoList').innerHTML = '';
+  document.getElementById('btnDeleteAllTab').style.display = 'none';
+}
+
+async function deleteAllWeek() {
+  if (!GH.token) { showToast('Token GitHub diperlukan!', 'error'); return; }
+  const total = totalPhotoCount;
+  if (!total) { showToast('Tidak ada foto sama sekali.', 'error'); return; }
+  if (!confirm(`Hapus SEMUA ${total} foto dari semua hari? Tindakan ini TIDAK BISA dibatalkan!`)) return;
+  const statusEl = document.getElementById('deleteStatus');
+  let deleted = 0;
+  for (let d = 1; d <= 7; d++) {
+    const photos = allPhotos[`day${d}`] || [];
+    for (const photo of photos) {
+      statusEl.textContent = `🗑 Menghapus foto (${deleted+1}/${total})...`;
+      const ok = await ghDelete(photo.path, photo.sha);
+      if (ok) deleted++;
+    }
+  }
+  statusEl.textContent = `✅ ${deleted} foto dihapus dari semua hari.`;
+  statusEl.style.color = '#4ade80';
+  showToast(`✅ ${deleted} foto berhasil dihapus semua!`);
+  await initGallery();
+  showDeleteSection();
+}
+
+// ─── AUTO EXPIRE (hapus foto ≥7 hari otomatis) ────────
+async function checkAndAutoExpire() {
+  if (!weekConfig || !weekConfig.weekStart || !GH.token) return;
+  const elapsed = Date.now() - weekConfig.weekStart;
+  if (elapsed < 7 * 86400000) return; // belum 7 hari
+  // sudah lebih dari 7 hari — hapus otomatis
+  console.log('[AutoExpire] Foto sudah >7 hari, memulai penghapusan otomatis...');
+  let deleted = 0;
+  for (let d = 1; d <= 7; d++) {
+    const photos = await ghListDay(d);
+    for (const photo of photos) {
+      const ok = await ghDelete(photo.path, photo.sha);
+      if (ok) deleted++;
+    }
+  }
+  if (deleted > 0) {
+    // Save new week config
+    await ghSaveConfig({ weekStart: Date.now() });
+    showToast(`🔄 ${deleted} foto minggu lalu otomatis dihapus. Minggu baru dimulai!`);
+    await initGallery();
+  }
+}
+
+
 function generateQR() {
   const url = window.location.href.split('?')[0].split('#')[0] || window.location.href;
   document.getElementById('qrUrl').textContent = url;
