@@ -1527,6 +1527,20 @@
   </div>
 </div>
 
+<!-- DELIVERY ITEM POPUP -->
+<div id="deliveryPopupOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(12px);z-index:3600;display:none;align-items:center;justify-content:center;padding:12px;" onclick="if(event.target===this)closeDeliveryPopup()">
+  <div style="background:var(--bg2);border:1px solid rgba(0,255,136,.35);border-radius:16px;width:100%;max-width:720px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;animation:modalIn .3s ease both;box-shadow:0 0 60px rgba(0,255,136,.08);">
+    <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0;">
+      <div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:.9rem;font-weight:700;color:var(--green);letter-spacing:2px;">📦 ITEM PEMBELIAN</div>
+        <div id="deliveryPopupSub" style="font-size:.78rem;color:var(--muted);margin-top:4px;">Foto dan link item muncul setelah admin mengonfirmasi pesanan.</div>
+      </div>
+      <button onclick="closeDeliveryPopup()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;">✕</button>
+    </div>
+    <div id="deliveryPopupContent" style="padding:20px;overflow-y:auto;flex:1;"></div>
+  </div>
+</div>
+
 <!-- CONFIRM PAGE (overlay, triggered via ?confirm=orderId) -->
 <div id="confirmPageOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:9990;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:96%;max-width:420px;overflow:hidden;">
@@ -1554,6 +1568,8 @@
   const GH_FILE     = 'kikostoreweb/products.json';
   const GH_ORDERS   = 'kikostoreweb/orders.json';
   let   GH_TOKEN    = '';
+  const LS_PRODUCTS_CACHE = 'kikoProductsCache_v3';
+  let lastGitHubError = '';
 
 
   // ─── HELPERS ───
@@ -1586,6 +1602,46 @@
     navigator.clipboard.writeText(link)
       .then(() => showToast('✅ Link berhasil disalin!'))
       .catch(() => showToast('⚠️ Browser menolak akses clipboard. Salin manual.'));
+  }
+
+  function loadProductsLocalCache() {
+    try {
+      const data = JSON.parse(localStorage.getItem(LS_PRODUCTS_CACHE) || '[]');
+      return Array.isArray(data) ? data : [];
+    } catch { return []; }
+  }
+
+  function saveProductsLocalCache(products) {
+    try { localStorage.setItem(LS_PRODUCTS_CACHE, JSON.stringify(products || [])); }
+    catch (err) { console.warn('Cache katalog lokal penuh/gagal:', err); }
+  }
+
+  function formatKB(data) {
+    return Math.round((String(data || '').length * 3 / 4) / 1024) + ' KB';
+  }
+
+  function resizeImageFile(file, maxSize = 1000, quality = 0.74) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const ratio = Math.min(1, maxSize / Math.max(img.width, img.height));
+          const w = Math.max(1, Math.round(img.width * ratio));
+          const h = Math.max(1, Math.round(img.height * ratio));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
 
@@ -1699,27 +1755,59 @@
 
   // ─── GITHUB API: Load products ───
   async function loadProductsFromGitHub() {
+    lastGitHubError = '';
     try {
-      const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
-      const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
-      if (!res.ok) return [];
+      const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?t=${Date.now()}`;
+      const res = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/vnd.github+json' } });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        lastGitHubError = `GET GitHub ${res.status}: ${txt.slice(0, 180)}`;
+        return loadProductsLocalCache();
+      }
       const data = await res.json();
-      const decoded = JSON.parse(atob(data.content.replace(/\n/g,'')));
-      return Array.isArray(decoded) ? decoded : [];
-    } catch { return []; }
+      const decoded = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))));
+      const arr = Array.isArray(decoded) ? decoded : [];
+      if (arr.length > 0) {
+        saveProductsLocalCache(arr);
+        return arr;
+      }
+      const local = loadProductsLocalCache();
+      return local.length ? local : arr;
+    } catch (err) {
+      lastGitHubError = err && err.message ? err.message : String(err);
+      return loadProductsLocalCache();
+    }
   }
 
   // ─── GITHUB API: Save products ───
   async function saveProductsToGitHub(products) {
-    if (!GH_TOKEN) { alert('⚠️ Token GitHub tidak tersedia. Login ulang.'); return false; }
+    lastGitHubError = '';
+    if (!GH_TOKEN) {
+      lastGitHubError = 'Token GitHub kosong. Login admin wajib memasukkan token dengan izin repo Contents: Read and Write.';
+      alert('⚠️ Token GitHub tidak tersedia. Login ulang dan isi token.');
+      return false;
+    }
     try {
+      const payloadSize = JSON.stringify(products || []).length;
+      if (payloadSize > 850000) {
+        const lanjut = confirm('⚠️ Ukuran database katalog sudah besar (' + Math.round(payloadSize/1024) + ' KB). Simpan ke GitHub tetap dicoba, tetapi jika gagal gunakan link item atau foto yang lebih kecil. Lanjut?');
+        if (!lanjut) { lastGitHubError = 'Dibatalkan karena database terlalu besar.'; return false; }
+      }
+
       const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
-      // Get current SHA
       let sha = '';
-      const getRes = await fetch(url, {
+      const getRes = await fetch(url + '?t=' + Date.now(), {
+        cache: 'no-store',
         headers: { 'Authorization': `Bearer ${GH_TOKEN}`, 'Accept': 'application/vnd.github+json' }
       });
-      if (getRes.ok) { const d = await getRes.json(); sha = d.sha; }
+      if (getRes.ok) {
+        const d = await getRes.json();
+        sha = d.sha;
+      } else if (getRes.status !== 404) {
+        const txt = await getRes.text().catch(() => '');
+        lastGitHubError = `GET GitHub ${getRes.status}: ${txt.slice(0, 220)}`;
+        return false;
+      }
 
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(products, null, 2))));
       const body = { message: 'Update catalog via admin panel', content, ...(sha ? { sha } : {}) };
@@ -1733,15 +1821,25 @@
         },
         body: JSON.stringify(body)
       });
-      return putRes.ok;
-    } catch (e) { console.error(e); return false; }
+      if (!putRes.ok) {
+        const txt = await putRes.text().catch(() => '');
+        lastGitHubError = `PUT GitHub ${putRes.status}: ${txt.slice(0, 260)}`;
+        return false;
+      }
+      saveProductsLocalCache(products);
+      return true;
+    } catch (e) {
+      console.error(e);
+      lastGitHubError = e && e.message ? e.message : String(e);
+      return false;
+    }
   }
 
   // ─── CATALOG STATE ───
   let cachedProducts = [];
 
-  async function getAllProducts() {
-    if (cachedProducts.length === 0) {
+  async function getAllProducts(forceReload = false) {
+    if (forceReload || cachedProducts.length === 0) {
       cachedProducts = await loadProductsFromGitHub();
     }
     return cachedProducts;
@@ -1749,8 +1847,13 @@
 
   async function saveCustomProducts(products) {
     cachedProducts = products;
+    saveProductsLocalCache(products); // agar tidak hilang saat reload browser yang sama
     const ok = await saveProductsToGitHub(products);
-    if (!ok) showToast('❌ Gagal simpan ke GitHub. Cek token kamu.');
+    if (!ok) {
+      console.error('GitHub save error:', lastGitHubError);
+      alert('❌ Produk belum tersimpan ke database GitHub. Data hanya tersimpan sementara di browser ini.\n\nPenyebab dari GitHub: ' + (lastGitHubError || 'tidak diketahui') + '\n\nCek token, izin repo, nama repo/path, dan ukuran foto.');
+      showToast('⚠️ Katalog hanya tersimpan lokal, belum masuk GitHub.');
+    }
     return ok;
   }
 
@@ -2080,7 +2183,9 @@
         product: order.product,
         price: order.price,
         status: 'pending',
-        time: order.time
+        time: order.time,
+        deliveryLinks: order.deliveryLinks || [],
+        deliveryCount: (order.deliveryImgs || []).length
       });
       const confirmLink = `${SITE_URL}?confirm=${encodeURIComponent(orderId)}&order=${encodeURIComponent(orderPayload)}`;
 
@@ -2097,7 +2202,7 @@
             { name: '💰 Harga', value: price, inline: true },
             { name: '📧 Email', value: email, inline: false },
             { name: '🆔 Order ID', value: `\`${orderId}\``, inline: false },
-            { name: '📦 Bahan Jualan', value: hasDelivery ? '✅ Sudah tersedia' : '⚠️ Belum diisi di katalog', inline: true },
+            { name: '📦 Bahan Jualan', value: hasDelivery ? `✅ Tersedia (${(prodData.deliveryImgs||[]).length} foto, ${(prodData.deliveryLinks||[]).length} link)` : '⚠️ Belum terbaca. Biasanya katalog belum tersimpan ke GitHub.', inline: true },
             { name: '🛒 Keranjang Pembeli', value: 'Muncul otomatis di browser pembeli yang sama setelah admin konfirmasi.', inline: false },
             { name: '✅ Link Konfirmasi Admin', value: `[Klik untuk konfirmasi order ini](${confirmLink})`, inline: false }
           ],
@@ -2153,8 +2258,14 @@
         myOrders[idx].status        = 'confirmed';
         myOrders[idx].confirmedAt   = confirmed.confirmedAt || new Date().toISOString();
         myOrders[idx].discordId     = confirmed.discordId || myOrders[idx].discordId || '';
-        myOrders[idx].deliveryImgs  = confirmed.deliveryImgs  || [];
-        myOrders[idx].deliveryLinks = confirmed.deliveryLinks || [];
+        const confirmedImgs  = Array.isArray(confirmed.deliveryImgs)  ? confirmed.deliveryImgs.filter(Boolean)  : [];
+        const confirmedLinks = Array.isArray(confirmed.deliveryLinks) ? confirmed.deliveryLinks.filter(Boolean) : [];
+        const localImgs      = Array.isArray(myOrders[idx].deliveryImgs)  ? myOrders[idx].deliveryImgs.filter(Boolean)  : [];
+        const localLinks     = Array.isArray(myOrders[idx].deliveryLinks) ? myOrders[idx].deliveryLinks.filter(Boolean) : [];
+        // Jangan hapus bahan jualan yang sudah tersimpan di browser pembeli.
+        // Jika admin/GitHub mengirim data kosong, cart tetap memakai foto/link lokal dari saat checkout.
+        myOrders[idx].deliveryImgs  = confirmedImgs.length  ? confirmedImgs  : localImgs;
+        myOrders[idx].deliveryLinks = confirmedLinks.length ? confirmedLinks : localLinks;
         changed = true;
       }
     });
@@ -2197,6 +2308,8 @@
   }
   function closeCart() {
     document.getElementById('cartOverlay').style.display = 'none';
+    const deliveryOverlay = document.getElementById('deliveryPopupOverlay');
+    if (deliveryOverlay) deliveryOverlay.style.display = 'none';
     document.body.style.overflow = '';
   }
 
@@ -2210,43 +2323,104 @@
       </div>`;
       return;
     }
+
     el.innerHTML = myOrders.map(order => {
       const isPending   = order.status === 'pending';
       const isConfirmed = order.status === 'confirmed';
-      const hasFiles    = (order.deliveryImgs && order.deliveryImgs.length > 0) || (order.deliveryLinks && order.deliveryLinks.length > 0);
+      const imgCount    = Array.isArray(order.deliveryImgs) ? order.deliveryImgs.filter(Boolean).length : 0;
+      const linkCount   = Array.isArray(order.deliveryLinks) ? order.deliveryLinks.filter(Boolean).length : 0;
+      const hasFiles    = imgCount > 0 || linkCount > 0;
+      const orderIdAttr = escapeHTML(order.id || '');
 
-      let deliveryHTML = '';
-      if (isConfirmed && hasFiles) {
-        const imgs = (order.deliveryImgs || []).map((src, i) =>
-          `<div style="margin-bottom:8px;">
-            <img src="${src}" style="width:100%;border-radius:8px;cursor:pointer;" onclick='openImgLightbox(${JSON.stringify(order.deliveryImgs)},${i})'/>
-            <a href="${src}" download="file-${order.product}-${i+1}.jpg" style="display:block;text-align:center;margin-top:4px;font-size:.78rem;color:var(--accent);text-decoration:none;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);border-radius:4px;padding:4px;">⬇️ Download Foto ${i+1}</a>
-          </div>`
-        ).join('');
-        const links = (order.deliveryLinks || []).map(link =>
-          `<div style="display:flex;align-items:center;gap:8px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);border-radius:6px;padding:8px 12px;margin-bottom:6px;">
-            <span style="font-size:.8rem;color:var(--green);flex:1;word-break:break-all;">${link}</span>
-            <button onclick='copyBuyerLink(${JSON.stringify(link)})' style="background:rgba(0,255,136,.15);border:1px solid rgba(0,255,136,.3);border-radius:4px;color:var(--green);padding:4px 8px;cursor:pointer;font-size:.75rem;white-space:nowrap;">📋 Salin</button>
-            <a href="${link}" target="_blank" style="background:rgba(0,255,136,.15);border:1px solid rgba(0,255,136,.3);border-radius:4px;color:var(--green);padding:4px 8px;font-size:.75rem;text-decoration:none;white-space:nowrap;">🔗 Buka</a>
-          </div>`
-        ).join('');
-        deliveryHTML = `<div style="margin-top:12px;">${imgs}${links}</div>`;
-      }
+      const actionHTML = isConfirmed
+        ? (hasFiles
+          ? `<button onclick="openDeliveryPopup('${orderIdAttr}')" style="width:100%;margin-top:10px;background:linear-gradient(135deg,var(--green),#00b36b);border:none;border-radius:8px;color:#00110a;font-family:'Orbitron',sans-serif;font-weight:800;font-size:.76rem;letter-spacing:1.5px;padding:11px 12px;cursor:pointer;">📦 BUKA ITEM · ${imgCount} FOTO · ${linkCount} LINK</button>`
+          : `<div style="font-size:.78rem;color:var(--muted);background:rgba(255,51,85,.06);border:1px solid rgba(255,51,85,.18);border-radius:6px;padding:8px 10px;margin-top:10px;">⚠️ Pesanan sudah dikonfirmasi, tetapi foto/link belum terbaca di browser ini. Pastikan order dibuka di browser yang sama saat checkout atau cek data produk di admin.</div>`)
+        : `<div style="font-size:.78rem;color:var(--muted);background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.15);border-radius:6px;padding:8px 10px;margin-top:10px;">⏳ Menunggu konfirmasi admin. Setelah dikonfirmasi, tombol buka item akan muncul di sini.</div>`;
 
-      return `<div style="background:var(--card);border:1px solid ${isConfirmed ? 'rgba(0,255,136,.3)' : 'var(--border)'};border-radius:10px;padding:14px;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div>
-            <div style="font-weight:700;font-size:1rem;">${order.product}</div>
-            <div style="font-size:.78rem;color:var(--muted);">${order.price} · ${new Date(order.time).toLocaleDateString('id-ID')}</div>
+      return `<div onclick="${isConfirmed && hasFiles ? `openDeliveryPopup('${orderIdAttr}')` : ''}" style="background:var(--card);border:1px solid ${isConfirmed ? 'rgba(0,255,136,.3)' : 'var(--border)'};border-radius:10px;padding:14px;margin-bottom:12px;${isConfirmed && hasFiles ? 'cursor:pointer;' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px;">
+          <div style="min-width:0;">
+            <div style="font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(order.product || '-')}</div>
+            <div style="font-size:.78rem;color:var(--muted);">${escapeHTML(order.price || '-')} · ${order.time ? new Date(order.time).toLocaleDateString('id-ID') : '-'}</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:3px;">Order ID: ${escapeHTML(order.id || '-')}</div>
           </div>
-          <span style="font-size:.7rem;font-family:'Orbitron',sans-serif;padding:3px 8px;border-radius:4px;background:${isConfirmed ? 'rgba(0,255,136,.15)' : 'rgba(255,215,0,.12)'};color:${isConfirmed ? 'var(--green)' : 'var(--gold)'};">
+          <span style="font-size:.7rem;font-family:'Orbitron',sans-serif;padding:3px 8px;border-radius:4px;background:${isConfirmed ? 'rgba(0,255,136,.15)' : 'rgba(255,215,0,.12)'};color:${isConfirmed ? 'var(--green)' : 'var(--gold)'};white-space:nowrap;">
             ${isConfirmed ? '✅ CONFIRMED' : '⏳ PENDING'}
           </span>
         </div>
-        ${isPending ? `<div style="font-size:.78rem;color:var(--muted);background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.15);border-radius:6px;padding:8px 10px;">⏳ Menunggu konfirmasi admin. File akan muncul di sini otomatis setelah dikonfirmasi.</div>` : ''}
-        ${deliveryHTML}
+        ${actionHTML}
       </div>`;
     }).join('');
+  }
+
+  function safeFileName(value) {
+    return String(value || 'kikostore-item')
+      .toLowerCase()
+      .replace(/[^a-z0-9\-_]+/gi, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'kikostore-item';
+  }
+
+  function openDeliveryPopup(orderId) {
+    const myOrders = JSON.parse(localStorage.getItem('kikoMyOrders') || '[]');
+    const order = myOrders.find(o => String(o.id) === String(orderId));
+    const overlay = document.getElementById('deliveryPopupOverlay');
+    const sub = document.getElementById('deliveryPopupSub');
+    const content = document.getElementById('deliveryPopupContent');
+
+    if (!order) {
+      showToast('⚠️ Order tidak ditemukan di browser ini.');
+      return;
+    }
+
+    const imgs = Array.isArray(order.deliveryImgs) ? order.deliveryImgs.filter(Boolean) : [];
+    const links = Array.isArray(order.deliveryLinks) ? order.deliveryLinks.filter(Boolean) : [];
+    const productName = order.product || 'Item KIKOSTORE';
+    sub.textContent = `${productName} · ${order.id || '-'} · ${imgs.length} foto · ${links.length} link`;
+
+    const photoHTML = imgs.length ? `
+      <div style="margin-top:14px;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:.76rem;color:var(--accent);letter-spacing:1.6px;margin-bottom:10px;">🖼️ FOTO ITEM</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">
+          ${imgs.map((src, i) => `
+            <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:8px;overflow:hidden;">
+              <img src="${src}" alt="Foto item ${i + 1}" onclick='openImgLightbox(${JSON.stringify(imgs)},${i})' style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;cursor:zoom-in;background:#000;"/>
+              <a href="${src}" download="${safeFileName(productName)}-${i + 1}.jpg" onclick="event.stopPropagation()" style="display:block;text-align:center;margin-top:7px;font-size:.78rem;color:var(--green);text-decoration:none;background:rgba(0,255,136,.09);border:1px solid rgba(0,255,136,.25);border-radius:6px;padding:7px 8px;font-weight:700;">⬇️ Download Foto ${i + 1}</a>
+            </div>`).join('')}
+        </div>
+      </div>` : '';
+
+    const linkHTML = links.length ? `
+      <div style="margin-top:16px;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:.76rem;color:var(--accent);letter-spacing:1.6px;margin-bottom:10px;">🔗 LINK ITEM</div>
+        ${links.map((link, i) => `
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);border-radius:8px;padding:9px 10px;margin-bottom:8px;">
+            <div style="font-size:.78rem;color:var(--green);flex:1;word-break:break-all;line-height:1.35;">${escapeHTML(link)}</div>
+            <button onclick='event.stopPropagation();copyBuyerLink(${JSON.stringify(link)})' style="background:rgba(0,255,136,.15);border:1px solid rgba(0,255,136,.3);border-radius:6px;color:var(--green);padding:6px 9px;cursor:pointer;font-size:.75rem;white-space:nowrap;font-weight:700;">📋 Copy</button>
+            <a href="${escapeHTML(link)}" target="_blank" onclick="event.stopPropagation()" style="background:rgba(0,212,255,.13);border:1px solid rgba(0,212,255,.3);border-radius:6px;color:var(--accent);padding:6px 9px;font-size:.75rem;text-decoration:none;white-space:nowrap;font-weight:700;">Buka</a>
+          </div>`).join('')}
+      </div>` : '';
+
+    content.innerHTML = `
+      <div style="background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);border-radius:10px;padding:12px 14px;line-height:1.5;">
+        <div style="font-weight:800;color:var(--green);font-size:.95rem;">✅ Pesanan sudah dikonfirmasi admin</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:4px;">Silakan download foto atau buka/copy link item di bawah ini. Item tetap tersimpan di keranjang browser ini.</div>
+      </div>
+      ${photoHTML}
+      ${linkHTML}
+      ${(!imgs.length && !links.length) ? `<div style="text-align:center;padding:30px 0;color:var(--muted);"><div style="font-size:2rem;margin-bottom:8px;">📭</div><div>Belum ada foto/link item pada order ini.</div></div>` : ''}
+      <button onclick="closeDeliveryPopup()" style="width:100%;margin-top:18px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Orbitron',sans-serif;font-weight:700;font-size:.76rem;letter-spacing:1.4px;padding:11px;cursor:pointer;">TUTUP</button>`;
+
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDeliveryPopup() {
+    document.getElementById('deliveryPopupOverlay').style.display = 'none';
+    // Jika cart masih terbuka, body tetap dikunci; jika tidak, buka scroll lagi.
+    const cartOpen = document.getElementById('cartOverlay') && document.getElementById('cartOverlay').style.display === 'flex';
+    if (!cartOpen) document.body.style.overflow = '';
   }
 
   // ─── Toast ───
@@ -2330,8 +2504,8 @@
     const { data } = await ghReadFile(GH_ORDERS);
     const orders = Array.isArray(data) ? data : [];
 
-    // Find product delivery data.
-    const allProds = await loadProductsFromGitHub();
+    // Find product delivery data. Pakai force reload + local cache agar data katalog yang baru dibuat tidak kosong.
+    const allProds = await getAllProducts(true);
 
     let orderEntry = orders.find(o => o.id === orderId);
     if (!orderEntry && decodedFromLink && decodedFromLink.id === orderId) {
@@ -2351,10 +2525,11 @@
     }
 
     const prodData = allProds.find(p => p.name === orderEntry.product) || {};
+    const linkFallback = (decodedFromLink && decodedFromLink.deliveryLinks) ? decodedFromLink.deliveryLinks : [];
     orderEntry.status        = 'confirmed';
     orderEntry.confirmedAt   = new Date().toISOString();
-    orderEntry.deliveryImgs  = prodData.deliveryImgs  || orderEntry.deliveryImgs  || [];
-    orderEntry.deliveryLinks = prodData.deliveryLinks || orderEntry.deliveryLinks || [];
+    orderEntry.deliveryImgs  = (prodData.deliveryImgs && prodData.deliveryImgs.length ? prodData.deliveryImgs : (orderEntry.deliveryImgs || []));
+    orderEntry.deliveryLinks = (prodData.deliveryLinks && prodData.deliveryLinks.length ? prodData.deliveryLinks : ((orderEntry.deliveryLinks && orderEntry.deliveryLinks.length) ? orderEntry.deliveryLinks : linkFallback));
     orderEntry.discordId     = orderEntry.discordId || orderEntry.name || '';
 
     const existIdx = orders.findIndex(o => o.id === orderId);
@@ -2370,7 +2545,7 @@
         <div style="text-align:center;padding:20px 0;">
           <div style="font-size:3rem;margin-bottom:12px;">✅</div>
           <div style="font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--green);letter-spacing:2px;">ORDER DIKONFIRMASI!</div>
-          <div style="font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.5;">Pembeli akan otomatis mendapat akses foto/link di keranjang dalam ±10 detik. Notifikasi juga dikirim ke Discord webhook dengan username pembeli. Untuk email, klik tombol di bawah karena HTML static tidak bisa mengirim email otomatis tanpa backend.</div>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.5;">Pembeli akan otomatis mendapat akses foto/link di keranjang dalam ±10 detik. Data terkirim: ${(orderEntry.deliveryImgs||[]).length} foto dan ${(orderEntry.deliveryLinks||[]).length} link. Jika angkanya 0, berarti produk belum tersimpan di database GitHub atau bahan jualan belum diisi. Untuk email, klik tombol di bawah karena HTML static tidak bisa mengirim email otomatis tanpa backend.</div>
           <button onclick='openBuyerEmail(${safeOrder})' style="width:100%;margin-top:16px;padding:10px 14px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.35);border-radius:8px;color:var(--accent);font-size:.85rem;cursor:pointer;font-weight:700;">📧 Buka Email Pembeli</button>
           <button onclick='copyDiscordDeliveryMessage(${safeOrder})' style="width:100%;margin-top:8px;padding:10px 14px;background:rgba(88,101,242,.14);border:1px solid rgba(88,101,242,.35);border-radius:8px;color:#8ea0f5;font-size:.85rem;cursor:pointer;font-weight:700;">💬 Salin Pesan Discord</button>
           <button onclick="document.getElementById('confirmPageOverlay').style.display='none';document.body.style.overflow='';" style="width:100%;margin-top:8px;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.85rem;cursor:pointer;">Tutup</button>
@@ -2468,31 +2643,38 @@
 
   // ─── Delivery image preview ───
   let deliveryImgsBase64 = [];
-  function previewDeliveryImgs(event) {
+  async function previewDeliveryImgs(event) {
     const files = Array.from(event.target.files).slice(0, 10);
     deliveryImgsBase64 = [];
     const container = document.getElementById('deliveryImgPreviews');
     const label = document.getElementById('deliveryImgLabel');
     container.innerHTML = '';
-    files.forEach((file, i) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        deliveryImgsBase64[i] = e.target.result;
+    if (!files.length) return;
+    label.innerHTML = '⏳ Mengompres foto item...';
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const dataUrl = await resizeImageFile(file, 1000, 0.74);
+        deliveryImgsBase64[i] = dataUrl;
         const wrap = document.createElement('div');
         wrap.style.cssText = 'position:relative;width:72px;height:72px;';
         const img = document.createElement('img');
-        img.src = e.target.result;
+        img.src = dataUrl;
+        img.title = 'Ukuran tersimpan: ' + formatKB(dataUrl);
         img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--green);';
         const del = document.createElement('button');
         del.textContent = '✕';
         del.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(255,51,85,.85);border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;color:#fff;cursor:pointer;';
-        del.onclick = () => { deliveryImgsBase64.splice(i,1); wrap.remove(); };
+        del.onclick = () => { deliveryImgsBase64.splice(i,1); wrap.remove(); label.innerHTML = `📁 ${deliveryImgsBase64.filter(Boolean).length} foto item dipilih`; };
         wrap.appendChild(img); wrap.appendChild(del);
         container.appendChild(wrap);
-        label.innerHTML = `📁 ${deliveryImgsBase64.filter(Boolean).length} foto dipilih · <span style="color:var(--green)">Klik untuk tambah lagi</span>`;
-      };
-      reader.readAsDataURL(file);
-    });
+        label.innerHTML = `📁 ${deliveryImgsBase64.filter(Boolean).length} foto item dipilih · <span style="color:var(--green)">sudah dikompres otomatis</span>`;
+      } catch (err) {
+        console.error('Gagal kompres foto item:', err);
+        label.innerHTML = '❌ Ada foto item yang gagal dibaca. Coba file lain.';
+      }
+    }
   }
 
   function addDeliveryLinkField() {
@@ -2506,33 +2688,38 @@
     container.appendChild(row);
   }
   let catalogImgsBase64 = [];
-  function previewCatalogImgs(event) {
+  async function previewCatalogImgs(event) {
     const files = Array.from(event.target.files).slice(0, 10);
     catalogImgsBase64 = [];
     const container = document.getElementById('catalogImgPreviews');
     const label = document.getElementById('upLabel');
     container.innerHTML = '';
-    let loaded = 0;
-    files.forEach((file, i) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        catalogImgsBase64[i] = e.target.result;
+    if (!files.length) return;
+    label.innerHTML = '⏳ Mengompres foto katalog...';
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const dataUrl = await resizeImageFile(file, 1000, 0.74);
+        catalogImgsBase64[i] = dataUrl;
         const wrap = document.createElement('div');
         wrap.style.cssText = 'position:relative;width:72px;height:72px;';
         const img = document.createElement('img');
-        img.src = e.target.result;
+        img.src = dataUrl;
+        img.title = 'Ukuran tersimpan: ' + formatKB(dataUrl);
         img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--border);';
         const del = document.createElement('button');
         del.textContent = '✕';
         del.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(255,51,85,.85);border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;';
-        del.onclick = () => { catalogImgsBase64.splice(i, 1); wrap.remove(); label.textContent = `🖼️ ${catalogImgsBase64.length} foto dipilih`; };
+        del.onclick = () => { catalogImgsBase64.splice(i, 1); wrap.remove(); label.textContent = `🖼️ ${catalogImgsBase64.filter(Boolean).length} foto katalog dipilih`; };
         wrap.appendChild(img); wrap.appendChild(del);
         container.appendChild(wrap);
-        loaded++;
-        label.innerHTML = `🖼️ ${loaded} foto dipilih · <span style="color:var(--accent)">Klik untuk tambah lagi</span>`;
-      };
-      reader.readAsDataURL(file);
-    });
+        label.innerHTML = `🖼️ ${catalogImgsBase64.filter(Boolean).length} foto katalog dipilih · <span style="color:var(--accent)">sudah dikompres otomatis</span>`;
+      } catch (err) {
+        console.error('Gagal kompres foto katalog:', err);
+        label.innerHTML = '❌ Ada foto katalog yang gagal dibaca. Coba file lain.';
+      }
+    }
   }
 
   // ─── Catalog: Add Product ───
@@ -2578,7 +2765,11 @@
     btn.disabled = false;
     btn.textContent = '⚡ TAMBAHKAN KE KATALOG';
 
-    if (!ok) return;
+    if (!ok) {
+      renderProducts();
+      renderCatalogList();
+      return;
+    }
 
     // Reset form
     document.getElementById('newProdName').value = '';
@@ -2603,7 +2794,7 @@
 
     renderProducts();
     renderCatalogList();
-    showToast('✅ Produk "' + name + '" berhasil ditambahkan!');
+    showToast('✅ Produk "' + name + '" berhasil tersimpan ke GitHub!');
   }
 
   // ─── Catalog: Delete Product ───
@@ -2638,7 +2829,7 @@
           <div class="catalog-item-thumb">${thumbContent}</div>
           <div class="catalog-item-info">
             <div class="catalog-item-name">${p.name}</div>
-            <div class="catalog-item-meta">${p.sub || p.cat} · ${p.badge || 'No Badge'}</div>
+            <div class="catalog-item-meta">${p.sub || p.cat} · ${p.badge || 'No Badge'} · ${(p.deliveryImgs||[]).length} foto item · ${(p.deliveryLinks||[]).length} link</div>
             <div class="catalog-item-price">${p.price}${p.oldPrice ? ` <span style="color:var(--muted);text-decoration:line-through;font-size:.72rem">${p.oldPrice}</span>` : ''}</div>
           </div>
           ${delBtn}
