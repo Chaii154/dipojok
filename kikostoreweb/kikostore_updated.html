@@ -1309,7 +1309,12 @@
       </div>
       <div class="input-group">
         <label>Password</label>
-        <input type="password" id="adminPass" placeholder="Masukkan Password" onkeydown="if(event.key==='Enter')doAdminLogin()"/>
+        <input type="password" id="adminPass" placeholder="Masukkan Password"/>
+      </div>
+      <div class="input-group">
+        <label>GitHub Token 🔑</label>
+        <input type="password" id="adminToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" onkeydown="if(event.key==='Enter')doAdminLogin()"/>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">Token hanya dipakai sesi ini, tidak disimpan di file.</div>
       </div>
       <button class="btn-admin-login" onclick="doAdminLogin()">🔓 LOGIN</button>
       <div class="admin-error" id="adminError">⛔ ID atau Password salah!</div>
@@ -1408,21 +1413,77 @@
   const ADMIN_ID   = 'Kiko';
   const ADMIN_PASS = 'Hahai154';
 
-  // ─── CATALOG STORAGE ───
-  function getCustomProducts() {
-    try { return JSON.parse(localStorage.getItem('kikoCustomProducts') || '[]'); } catch { return []; }
+  // ─── GITHUB CONFIG ───
+  const GH_OWNER = 'Chaii154';
+  const GH_REPO  = 'dipojok';
+  const GH_FILE  = 'kikostoreweb/products.json';
+  let   GH_TOKEN = ''; // diisi saat login admin
+
+  // ─── GITHUB API: Load products ───
+  async function loadProductsFromGitHub() {
+    try {
+      const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
+      const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+      if (!res.ok) return [];
+      const data = await res.json();
+      const decoded = JSON.parse(atob(data.content.replace(/\n/g,'')));
+      return Array.isArray(decoded) ? decoded : [];
+    } catch { return []; }
   }
-  function saveCustomProducts(arr) {
-    localStorage.setItem('kikoCustomProducts', JSON.stringify(arr));
+
+  // ─── GITHUB API: Save products ───
+  async function saveProductsToGitHub(products) {
+    if (!GH_TOKEN) { alert('⚠️ Token GitHub tidak tersedia. Login ulang.'); return false; }
+    try {
+      const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
+      // Get current SHA
+      let sha = '';
+      const getRes = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${GH_TOKEN}`, 'Accept': 'application/vnd.github+json' }
+      });
+      if (getRes.ok) { const d = await getRes.json(); sha = d.sha; }
+
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(products, null, 2))));
+      const body = { message: 'Update catalog via admin panel', content, ...(sha ? { sha } : {}) };
+
+      const putRes = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${GH_TOKEN}`,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      return putRes.ok;
+    } catch (e) { console.error(e); return false; }
   }
-  function getAllProducts() {
-    return getCustomProducts();
+
+  // ─── CATALOG STATE ───
+  let cachedProducts = [];
+
+  async function getAllProducts() {
+    if (cachedProducts.length === 0) {
+      cachedProducts = await loadProductsFromGitHub();
+    }
+    return cachedProducts;
+  }
+
+  async function saveCustomProducts(products) {
+    cachedProducts = products;
+    const ok = await saveProductsToGitHub(products);
+    if (!ok) showToast('❌ Gagal simpan ke GitHub. Cek token kamu.');
+    return ok;
   }
 
   // ─── RENDER PRODUCTS ───
-  function renderProducts() {
+  async function renderProducts() {
     const grid = document.getElementById('productsGrid');
-    const all  = getAllProducts();
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);">
+      <div style="font-size:2rem;margin-bottom:12px;">⏳</div>
+      <div style="font-size:.85rem;">Memuat katalog...</div>
+    </div>`;
+    const all = await getAllProducts();
     if (all.length === 0) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--muted);">
         <div style="font-size:3rem;margin-bottom:16px;">📦</div>
@@ -1652,9 +1713,11 @@
   });
 
   function doAdminLogin() {
-    const id   = document.getElementById('adminId').value.trim();
-    const pass = document.getElementById('adminPass').value;
-    if (id === ADMIN_ID && pass === ADMIN_PASS) {
+    const id    = document.getElementById('adminId').value.trim();
+    const pass  = document.getElementById('adminPass').value;
+    const token = document.getElementById('adminToken').value.trim();
+    if (id === ADMIN_ID && pass === ADMIN_PASS && token) {
+      GH_TOKEN = token;
       document.getElementById('adminLoginForm').style.display = 'none';
       const dash = document.getElementById('adminDashboard');
       dash.style.display = 'flex';
@@ -1664,7 +1727,11 @@
       renderOrders();
       renderCatalogList();
       switchAdminTab('orders', document.querySelector('.admin-tab'));
+    } else if (id === ADMIN_ID && pass === ADMIN_PASS && !token) {
+      document.getElementById('adminError').textContent = '⛔ Token GitHub harus diisi!';
+      document.getElementById('adminError').style.display = 'block';
     } else {
+      document.getElementById('adminError').textContent = '⛔ ID atau Password salah!';
       document.getElementById('adminError').style.display = 'block';
     }
   }
@@ -1715,7 +1782,7 @@
   }
 
   // ─── Catalog: Add Product ───
-  function addProduct() {
+  async function addProduct() {
     const name     = document.getElementById('newProdName').value.trim();
     const cat      = document.getElementById('newProdCat').value;
     const price    = document.getElementById('newProdPrice').value.trim();
@@ -1729,6 +1796,10 @@
       return;
     }
 
+    const btn = document.querySelector('.btn-add-product');
+    btn.disabled = true;
+    btn.textContent = '⏳ Menyimpan...';
+
     const newProduct = {
       id: 'c' + Date.now(),
       name, cat, sub: sub || (cat.charAt(0).toUpperCase() + cat.slice(1)),
@@ -1738,9 +1809,14 @@
       custom: true
     };
 
-    const products = getCustomProducts();
+    const products = await getAllProducts();
     products.unshift(newProduct);
-    saveCustomProducts(products);
+    const ok = await saveCustomProducts(products);
+
+    btn.disabled = false;
+    btn.textContent = '⚡ TAMBAHKAN KE KATALOG';
+
+    if (!ok) return;
 
     // Reset form
     document.getElementById('newProdName').value = '';
@@ -1759,19 +1835,21 @@
   }
 
   // ─── Catalog: Delete Product ───
-  function deleteProduct(id) {
+  async function deleteProduct(id) {
     if (!confirm('Hapus produk ini dari katalog?')) return;
-    const products = getCustomProducts().filter(p => p.id !== id);
-    saveCustomProducts(products);
+    const products = (await getAllProducts()).filter(p => p.id !== id);
+    const ok = await saveCustomProducts(products);
+    if (!ok) return;
     renderProducts();
     renderCatalogList();
     showToast('🗑️ Produk berhasil dihapus.');
   }
 
   // ─── Catalog: Render list in admin ───
-  function renderCatalogList() {
+  async function renderCatalogList() {
     const list = document.getElementById('catalogList');
-    const all  = getAllProducts();
+    list.innerHTML = '<div class="no-catalog">⏳ Memuat...</div>';
+    const all  = await getAllProducts();
     if (all.length === 0) {
       list.innerHTML = '<div class="no-catalog">📭 Belum ada produk.</div>';
       return;
