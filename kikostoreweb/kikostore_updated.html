@@ -1331,8 +1331,13 @@
       </div>
 
       <div class="input-group">
-        <label>Nama Discord Kamu</label>
+        <label>Username Discord Kamu *</label>
         <input type="text" id="buyerName" placeholder="contoh: K1K0#1234"/>
+      </div>
+      <div class="input-group">
+        <label>Discord User ID / Username untuk Chat</label>
+        <input type="text" id="buyerDiscordId" placeholder="opsional: 123456789012345678 atau username Discord"/>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:4px;line-height:1.35;">Isi User ID angka agar bisa di-mention otomatis di Discord setelah admin konfirmasi.</div>
       </div>
       <div class="input-group">
         <label>Email (untuk terima file)</label>
@@ -1396,7 +1401,7 @@
     </div>
 
     <!-- DASHBOARD (hidden until login) -->
-    <div id="adminDashboard" style="display:none; display:flex; flex-direction:column; flex:1; overflow:hidden;">
+    <div id="adminDashboard" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
 
       <!-- TABS -->
       <div class="admin-tabs">
@@ -1544,7 +1549,7 @@
   const WEBHOOK_ADMIN     = 'https://discord.com/api/webhooks/1501080263424213094/Bq__pMR1uXScB1_ejT_GZuzgHu4sLbTqOsAED42toheAFef9tcvHqbrHja73csjP3Moe';
   const ADMIN_ID          = 'Kiko';
   const ADMIN_PASS        = 'Hahai154';
-  const SITE_URL          = 'https://chaii154.github.io/dipojok/kikostoreweb/kikostore_updated.html';
+  const SITE_URL          = window.location.origin + window.location.pathname;
 
   // ─── GITHUB CONFIG ───
   const GH_OWNER    = 'Chaii154';
@@ -1584,6 +1589,101 @@
     navigator.clipboard.writeText(link)
       .then(() => showToast('✅ Link berhasil disalin!'))
       .catch(() => showToast('⚠️ Browser menolak akses clipboard. Salin manual.'));
+  }
+
+
+  function normalizeDiscordMention(discordValue) {
+    const v = String(discordValue || '').trim();
+    return /^\d{15,25}$/.test(v) ? `<@${v}>` : v;
+  }
+
+  function buildDeliveryText(order) {
+    const lines = [
+      `Halo ${order.name || 'Pembeli'}, pesanan kamu sudah dikonfirmasi.`,
+      `Produk: ${order.product || '-'}`,
+      `Order ID: ${order.id || '-'}`,
+      '',
+      'Akses item:'
+    ];
+    const links = (order.deliveryLinks || []).filter(Boolean);
+    if (links.length) links.forEach((link, i) => lines.push(`${i + 1}. ${link}`));
+    if ((order.deliveryImgs || []).length) lines.push(`Foto item tersedia di keranjang Pembelianku pada browser tempat pembayaran dilakukan.`);
+    if (!links.length && !(order.deliveryImgs || []).length) lines.push('File/link belum tersedia. Hubungi admin KIKOSTORE.');
+    return lines.join('\n');
+  }
+
+  function openBuyerEmail(order) {
+    const subject = encodeURIComponent(`KIKOSTORE - Pesanan ${order.id || ''} dikonfirmasi`);
+    const body = encodeURIComponent(buildDeliveryText(order));
+    const to = encodeURIComponent(order.email || '');
+    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+  }
+
+  function copyDiscordDeliveryMessage(order) {
+    const msg = buildDeliveryText(order);
+    navigator.clipboard.writeText(msg)
+      .then(() => showToast('✅ Pesan Discord berhasil disalin!'))
+      .catch(() => showToast('⚠️ Browser menolak clipboard. Salin manual dari email/pesan.'));
+  }
+
+  function dataUrlToFile(dataUrl, fileName) {
+    const [meta, base64] = String(dataUrl || '').split(',');
+    if (!meta || !base64) return null;
+    const mime = (meta.match(/data:(.*?);base64/) || [])[1] || 'image/png';
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+    return new File([bytes], fileName, { type: mime });
+  }
+
+  async function sendDeliveryDiscordNotice(order) {
+    try {
+      const mention = normalizeDiscordMention(order.discordId || order.name || '');
+      const isMention = /^<@\d{15,25}>$/.test(mention);
+      const links = (order.deliveryLinks || []).filter(Boolean);
+      const imgs  = (order.deliveryImgs || []).filter(src => String(src).startsWith('data:image')).slice(0, 10);
+      const linkText = links.length ? links.map((l, i) => `${i + 1}. ${l}`).join('\n') : 'Tidak ada link. Foto/item dikirim sebagai lampiran dan tetap tersedia di keranjang browser pembeli.';
+      const payload = {
+        username: 'KIKOSTORE Delivery',
+        content: isMention ? `${mention} pesanan kamu sudah dikonfirmasi ✅` : undefined,
+        allowed_mentions: isMention ? { users: [String(order.discordId).trim()] } : { parse: [] },
+        embeds: [{
+          title: '✅ PESANAN DIKONFIRMASI',
+          color: 0x00ff88,
+          fields: [
+            { name: '👤 Pembeli', value: String(order.name || '-'), inline: true },
+            { name: '💬 Discord', value: String(order.discordId || order.name || '-'), inline: true },
+            { name: '📧 Email', value: String(order.email || '-'), inline: false },
+            { name: '📦 Produk', value: String(order.product || '-'), inline: true },
+            { name: '🆔 Order ID', value: `\`${order.id || '-'}\``, inline: true },
+            { name: '🔗 Link Item', value: linkText.slice(0, 1024), inline: false },
+            { name: '🖼️ Foto Item', value: imgs.length ? `${imgs.length} foto dikirim sebagai lampiran Discord dan tetap bisa diunduh dari keranjang.` : 'Tidak ada foto item.', inline: false },
+            { name: '🛒 Keranjang Browser', value: 'Foto/link otomatis muncul di menu 🛒 Pembelianku pada browser yang sama setelah polling membaca status confirmed.', inline: false }
+          ],
+          footer: { text: 'Catatan: webhook Discord mengirim ke channel webhook. Gunakan channel private agar file tidak bocor.' },
+          timestamp: new Date().toISOString()
+        }]
+      };
+
+      if (imgs.length) {
+        const form = new FormData();
+        form.append('payload_json', JSON.stringify(payload));
+        imgs.forEach((src, i) => {
+          const file = dataUrlToFile(src, `kikostore-${order.id || 'order'}-${i + 1}.png`);
+          if (file) form.append(`files[${i}]`, file, file.name);
+        });
+        await fetch(WEBHOOK_URL, { method: 'POST', body: form });
+      } else {
+        await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+    } catch (err) {
+      console.warn('Gagal kirim notifikasi delivery Discord:', err);
+    }
   }
 
   // ─── GITHUB API: Load products ───
@@ -1646,8 +1746,8 @@
   // ─── GITHUB API: Orders (read/write orders.json) ───
   async function ghReadFile(path) {
     try {
-      const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
-      const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+      const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}?t=${Date.now()}`;
+      const res = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/vnd.github+json' } });
       if (!res.ok) return { data: null, sha: '' };
       const d = await res.json();
       const data = JSON.parse(atob(d.content.replace(/\n/g,'')));
@@ -1882,6 +1982,7 @@
     document.getElementById('modalProduct').textContent = product;
     document.getElementById('modalPrice').textContent   = price;
     document.getElementById('buyerName').value  = '';
+    document.getElementById('buyerDiscordId').value = '';
     document.getElementById('buyerEmail').value = '';
     document.getElementById('proofFile').value  = '';
     document.getElementById('proofPreview').style.display = 'none';
@@ -1917,6 +2018,7 @@
   // ─── Confirm Payment ───
   async function confirmPayment() {
     const name      = document.getElementById('buyerName').value.trim();
+    const discordId = document.getElementById('buyerDiscordId').value.trim();
     const email     = document.getElementById('buyerEmail').value.trim();
     const product   = document.getElementById('modalProduct').textContent;
     const price     = document.getElementById('modalPrice').textContent;
@@ -1941,6 +2043,7 @@
       const order = {
         id: orderId,
         name,
+        discordId,
         email,
         product,
         price,
@@ -1960,6 +2063,7 @@
       const orderPayload = encodeOrderPayload({
         id: order.id,
         name: order.name,
+        discordId: order.discordId,
         email: order.email,
         product: order.product,
         price: order.price,
@@ -1977,6 +2081,7 @@
           color: 0x00ff88,
           fields: [
             { name: '👤 Nama Discord', value: name, inline: true },
+            { name: '💬 Discord Chat', value: discordId || name, inline: true },
             { name: '📦 Produk', value: product, inline: true },
             { name: '💰 Total', value: price, inline: true },
             { name: '📧 Email', value: email, inline: false },
@@ -1999,6 +2104,7 @@
           color: 0xffd700,
           fields: [
             { name: '👤 Pembeli', value: name, inline: true },
+            { name: '💬 Discord Chat', value: discordId || name, inline: true },
             { name: '📦 Produk', value: product, inline: true },
             { name: '💰 Harga', value: price, inline: true },
             { name: '📧 Email', value: email, inline: false },
@@ -2059,6 +2165,8 @@
       const idx = myOrders.findIndex(o => o.id === localOrder.id);
       if (idx !== -1) {
         myOrders[idx].status        = 'confirmed';
+        myOrders[idx].confirmedAt   = confirmed.confirmedAt || new Date().toISOString();
+        myOrders[idx].discordId     = confirmed.discordId || myOrders[idx].discordId || '';
         myOrders[idx].deliveryImgs  = confirmed.deliveryImgs  || [];
         myOrders[idx].deliveryLinks = confirmed.deliveryLinks || [];
         changed = true;
@@ -2261,6 +2369,7 @@
     orderEntry.confirmedAt   = new Date().toISOString();
     orderEntry.deliveryImgs  = prodData.deliveryImgs  || orderEntry.deliveryImgs  || [];
     orderEntry.deliveryLinks = prodData.deliveryLinks || orderEntry.deliveryLinks || [];
+    orderEntry.discordId     = orderEntry.discordId || orderEntry.name || '';
 
     const existIdx = orders.findIndex(o => o.id === orderId);
     if (existIdx !== -1) orders[existIdx] = orderEntry;
@@ -2269,12 +2378,16 @@
     const ok = await ghWriteFile(GH_ORDERS, orders, `Confirm order ${orderId}`);
 
     if (ok) {
+      await sendDeliveryDiscordNotice(orderEntry);
+      const safeOrder = JSON.stringify(orderEntry).replace(/</g, '\\u003c').replace(/'/g, '&#39;');
       document.getElementById('confirmPageBody').innerHTML = `
         <div style="text-align:center;padding:20px 0;">
           <div style="font-size:3rem;margin-bottom:12px;">✅</div>
           <div style="font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--green);letter-spacing:2px;">ORDER DIKONFIRMASI!</div>
-          <div style="font-size:.82rem;color:var(--muted);margin-top:8px;">Pembeli akan otomatis mendapat akses foto/link di keranjang dalam ±10 detik.</div>
-          <button onclick="document.getElementById('confirmPageOverlay').style.display='none';document.body.style.overflow='';" style="margin-top:16px;padding:10px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.85rem;cursor:pointer;">Tutup</button>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.5;">Pembeli akan otomatis mendapat akses foto/link di keranjang dalam ±10 detik. Notifikasi juga dikirim ke Discord webhook. Untuk email, klik tombol di bawah karena HTML static tidak bisa mengirim email otomatis tanpa backend.</div>
+          <button onclick='openBuyerEmail(${safeOrder})' style="width:100%;margin-top:16px;padding:10px 14px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.35);border-radius:8px;color:var(--accent);font-size:.85rem;cursor:pointer;font-weight:700;">📧 Buka Email Pembeli</button>
+          <button onclick='copyDiscordDeliveryMessage(${safeOrder})' style="width:100%;margin-top:8px;padding:10px 14px;background:rgba(88,101,242,.14);border:1px solid rgba(88,101,242,.35);border-radius:8px;color:#8ea0f5;font-size:.85rem;cursor:pointer;font-weight:700;">💬 Salin Pesan Discord</button>
+          <button onclick="document.getElementById('confirmPageOverlay').style.display='none';document.body.style.overflow='';" style="width:100%;margin-top:8px;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.85rem;cursor:pointer;">Tutup</button>
         </div>`;
     } else {
       errEl.textContent = '❌ Gagal simpan ke GitHub. Cek token dan izin repository.';
@@ -2359,6 +2472,7 @@
           </div>
           <div class="oi-product">📦 ${escapeHTML(o.product)}</div>
           <div class="oi-email">📧 ${escapeHTML(o.email)}</div>
+          ${o.discordId ? `<div class="oi-email">💬 ${escapeHTML(o.discordId)}</div>` : ''}
           <div class="oi-email" style="color:${o.status === 'confirmed' ? 'var(--green)' : 'var(--gold)'};font-size:.72rem">${status}</div>
           <div class="oi-email" style="color:var(--muted);font-size:.72rem">🕒 ${escapeHTML(o.time || '')}</div>
           ${o.proofSrc ? `<img src="${o.proofSrc}" alt="Bukti Bayar"/>` : ''}
@@ -2466,6 +2580,7 @@
       img: catalogImgsBase64[0] || '',
       deliveryImgs,
       deliveryLinks,
+      reusable: true,
       emojis: ['🎮','✨','💎','🌆'],
       custom: true
     };
