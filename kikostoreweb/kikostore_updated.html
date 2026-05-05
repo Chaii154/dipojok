@@ -1643,6 +1643,21 @@
     return new File([bytes], fileName, { type: mime });
   }
 
+
+  async function postDiscordWebhook(webhookUrl, payload, files = []) {
+    // Discord webhook dari GitHub Pages sering terkena blok CORS jika memakai fetch normal.
+    // mode:no-cors membuat browser tetap mengirim request, tetapi response Discord tidak bisa dibaca.
+    const form = new FormData();
+    form.append('payload_json', JSON.stringify(payload));
+    files.forEach((item, index) => {
+      const file = item && (item.file || item.blob || item);
+      const name = (item && item.name) || (file && file.name) || `file-${index + 1}.png`;
+      if (file) form.append(`files[${index}]`, file, name);
+    });
+    await fetch(webhookUrl, { method: 'POST', body: form, mode: 'no-cors' });
+    return true;
+  }
+
   async function sendDeliveryDiscordNotice(order) {
     try {
       const mention = normalizeDiscordMention(order.discordId || order.name || '');
@@ -1672,21 +1687,11 @@
         }]
       };
 
-      if (imgs.length) {
-        const form = new FormData();
-        form.append('payload_json', JSON.stringify(payload));
-        imgs.forEach((src, i) => {
-          const file = dataUrlToFile(src, `kikostore-${order.id || 'order'}-${i + 1}.png`);
-          if (file) form.append(`files[${i}]`, file, file.name);
-        });
-        await fetch(WEBHOOK_URL, { method: 'POST', body: form });
-      } else {
-        await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      }
+      const deliveryFiles = imgs.map((src, i) => {
+        const file = dataUrlToFile(src, `kikostore-${order.id || 'order'}-${i + 1}.png`);
+        return file ? { file, name: file.name } : null;
+      }).filter(Boolean);
+      await postDiscordWebhook(WEBHOOK_ADMIN, payload, deliveryFiles);
     } catch (err) {
       console.warn('Gagal kirim notifikasi delivery Discord:', err);
     }
@@ -2079,31 +2084,7 @@
       });
       const confirmLink = `${SITE_URL}?confirm=${encodeURIComponent(orderId)}&order=${encodeURIComponent(orderPayload)}`;
 
-      // Webhook bukti pembayaran utama.
-      const paymentForm = new FormData();
-      const paymentPayload = {
-        username: 'KIKOSTORE Payment',
-        embeds: [{
-          title: '💳 PEMBAYARAN BARU MASUK!',
-          color: 0x00ff88,
-          fields: [
-            { name: '👤 Username Discord', value: discordCode(name), inline: true },
-            { name: '💬 Kirim Chat ke Username', value: discordCode(discordId || name), inline: true },
-            { name: '📦 Produk', value: product, inline: true },
-            { name: '💰 Total', value: price, inline: true },
-            { name: '📧 Email', value: email, inline: false },
-            { name: '🆔 Order ID', value: `\`${orderId}\``, inline: false }
-          ],
-          footer: { text: 'KIKOSTORE · Konfirmasi Pembayaran QRIS' },
-          timestamp: new Date().toISOString()
-        }]
-      };
-      paymentForm.append('payload_json', JSON.stringify(paymentPayload));
-      paymentForm.append('file', file, file.name);
-      await fetch(WEBHOOK_URL, { method: 'POST', body: paymentForm });
-
       // Webhook admin: bukti pembayaran + link konfirmasi aman.
-      const adminForm = new FormData();
       const adminPayload = {
         username: 'KIKOSTORE ADMIN',
         embeds: [{
@@ -2124,16 +2105,14 @@
           timestamp: new Date().toISOString()
         }]
       };
-      adminForm.append('payload_json', JSON.stringify(adminPayload));
-      adminForm.append('file', file, file.name);
-      await fetch(WEBHOOK_ADMIN, { method: 'POST', body: adminForm });
+      await postDiscordWebhook(WEBHOOK_ADMIN, adminPayload, [{ file, name: file.name }]);
 
       startPolling(orderId);
       closeModal();
       showToast('✅ Bukti terkirim! Tunggu konfirmasi admin di keranjang 🛒');
     } catch (err) {
       console.error(err);
-      alert('❌ Gagal kirim konfirmasi. Coba lagi atau hubungi admin Discord.');
+      alert('❌ Gagal kirim konfirmasi. Cek koneksi internet, webhook Discord, atau coba upload bukti dengan ukuran lebih kecil.');
     } finally {
       btn.disabled = false;
       btn.textContent = '✅ Saya Sudah Bayar — Konfirmasi';
