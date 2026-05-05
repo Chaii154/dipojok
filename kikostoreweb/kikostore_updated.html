@@ -345,7 +345,7 @@
 
     .card-thumb {
       position: relative;
-      height: 220px;
+      height: 260px;
       overflow: hidden;
       background: #0a0f1e;
     }
@@ -355,6 +355,66 @@
       transition: transform .4s;
     }
     .product-card:hover .card-thumb img { transform: scale(1.07); }
+
+    /* Multi-photo grid layout */
+    .card-photo-grid {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 2px;
+      height: 100%;
+    }
+    .card-photo-main {
+      position: relative;
+      overflow: hidden;
+      cursor: zoom-in;
+    }
+    .card-photo-main img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform .4s;
+    }
+    .product-card:hover .card-photo-main img { transform: scale(1.05); }
+    .card-photo-side {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 2px;
+    }
+    .card-photo-side-item {
+      position: relative;
+      overflow: hidden;
+      cursor: zoom-in;
+    }
+    .card-photo-side-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform .3s;
+    }
+    .card-photo-side-item:hover img { transform: scale(1.08); }
+    .card-photo-more {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.65);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem; font-weight: 900; color: #fff;
+      backdrop-filter: blur(2px);
+    }
+
+    /* Btn Lihat Foto */
+    .btn-photos {
+      padding: 9px 16px;
+      background: transparent;
+      border: 1px solid rgba(0,212,255,.4);
+      border-radius: 6px;
+      color: var(--accent);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: .82rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-photos:hover { background: rgba(0,212,255,.08); border-color: var(--accent); }
 
     /* placeholder thumb for demo */
     .thumb-placeholder {
@@ -1407,14 +1467,20 @@
 </div>
 
 <!-- IMAGE LIGHTBOX -->
-<div id="imgLightbox" style="position:fixed;inset:0;background:rgba(0,0,0,.95);backdrop-filter:blur(12px);z-index:9998;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;" onclick="closeImgLightbox()">
-  <div style="position:relative;display:flex;align-items:center;gap:16px;" onclick="event.stopPropagation()">
-    <button id="lbPrevBtn" onclick="lbPrev()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:44px;height:44px;color:#fff;font-size:1.2rem;cursor:pointer;flex-shrink:0;">‹</button>
-    <img id="lbImg" src="" style="max-width:85vw;max-height:78vh;border-radius:12px;box-shadow:0 0 60px rgba(0,212,255,.2);object-fit:contain;"/>
-    <button id="lbNextBtn" onclick="lbNext()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:44px;height:44px;color:#fff;font-size:1.2rem;cursor:pointer;flex-shrink:0;">›</button>
+<div id="imgLightbox" style="position:fixed;inset:0;background:rgba(0,0,0,.96);backdrop-filter:blur(16px);z-index:9998;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;" onclick="closeImgLightbox()">
+  <!-- Close btn -->
+  <button onclick="closeImgLightbox()" style="position:absolute;top:16px;right:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:40px;height:40px;color:#fff;font-size:1.3rem;cursor:pointer;z-index:10;">✕</button>
+  <!-- Counter -->
+  <div id="lbCounter" style="color:rgba(255,255,255,.4);font-size:.75rem;letter-spacing:2px;font-family:'Orbitron',sans-serif;position:absolute;top:22px;left:50%;transform:translateX(-50%);"></div>
+  <!-- Main image + nav -->
+  <div style="display:flex;align-items:center;gap:12px;" onclick="event.stopPropagation()">
+    <button id="lbPrevBtn" onclick="lbPrev()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;width:48px;height:48px;color:#fff;font-size:1.5rem;cursor:pointer;flex-shrink:0;transition:background .2s;" onmouseover="this.style.background='rgba(0,212,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">‹</button>
+    <img id="lbImg" src="" style="max-width:80vw;max-height:68vh;border-radius:12px;box-shadow:0 0 80px rgba(0,212,255,.15);object-fit:contain;transition:opacity .2s;"/>
+    <button id="lbNextBtn" onclick="lbNext()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;width:48px;height:48px;color:#fff;font-size:1.5rem;cursor:pointer;flex-shrink:0;transition:background .2s;" onmouseover="this.style.background='rgba(0,212,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">›</button>
   </div>
-  <div id="lbCounter" style="color:rgba(255,255,255,.5);font-size:.8rem;letter-spacing:2px;font-family:'Orbitron',sans-serif;"></div>
-  <div style="color:rgba(255,255,255,.3);font-size:.75rem;">Klik di luar foto atau tekan ESC untuk tutup · ← → untuk navigasi</div>
+  <!-- Thumbnail strip -->
+  <div id="lbThumbs" onclick="event.stopPropagation()" style="display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;max-width:90vw;padding:4px 8px;"></div>
+  <div style="color:rgba(255,255,255,.25);font-size:.7rem;">← → navigasi · ESC tutup</div>
 </div>
 
 <!-- TOAST -->
@@ -1523,24 +1589,37 @@
     else if (p.badge === 'BUNDLE') badgeHTML = `<span class="badge-new" style="background:var(--gold);color:#000">BUNDLE</span>`;
 
     const imgs = p.imgs && p.imgs.length > 0 ? p.imgs : (p.img ? [p.img] : []);
+    const hasMore = imgs.length > 3;
+    const extraCount = imgs.length - 3;
+
     let thumbHTML = '';
-    if (imgs.length === 1) {
-      thumbHTML = `<img src="${imgs[0]}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in;" onclick="openImgLightbox(${JSON.stringify(imgs)},0)"/>`;
-    } else if (imgs.length > 1) {
-      const visible = imgs.slice(0, 4);
-      const extra = imgs.length > 4 ? imgs.length - 4 : 0;
-      const gridCols = visible.length === 2 ? '1fr 1fr' : visible.length === 3 ? '1fr 1fr' : '1fr 1fr';
-      const cells = visible.map((src, i) => {
-        const isLast = i === 3 && extra > 0;
-        return `<div style="position:relative;overflow:hidden;background:#0a0f1e;cursor:zoom-in;" onclick="openImgLightbox(${JSON.stringify(imgs)},${i})">
-          <img src="${src}" style="width:100%;height:100%;object-fit:cover;transition:transform .3s;" onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform=''"/>
-          ${isLast ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;color:#fff;">+${extra}</div>` : ''}
-        </div>`;
-      }).join('');
-      thumbHTML = `<div style="display:grid;grid-template-columns:${gridCols};gap:2px;height:100%;">${cells}</div>`;
-    } else {
+    if (imgs.length === 0) {
       const em = p.emojis || ['🎮','🎮','🎮','🎮'];
       thumbHTML = `<div class="thumb-placeholder"><div>${em[0]}</div><div>${em[1]}</div><div>${em[2]}</div><div>${em[3]}</div></div>`;
+    } else if (imgs.length === 1) {
+      thumbHTML = `<div class="card-photo-main" style="height:100%" onclick="openImgLightbox(${JSON.stringify(imgs)},0)">
+        <img src="${imgs[0]}" alt="${p.name}"/>
+      </div>`;
+    } else {
+      // Main photo (left, portrait 9:16 feel) + up to 2 side photos
+      const side1 = imgs[1] || null;
+      const side2 = imgs[2] || null;
+      const sideHTML = `
+        <div class="card-photo-side">
+          ${side1 ? `<div class="card-photo-side-item" onclick="openImgLightbox(${JSON.stringify(imgs)},1)">
+            <img src="${side1}" alt="${p.name}"/>
+          </div>` : '<div style="background:#0a0f1e;"></div>'}
+          ${side2 ? `<div class="card-photo-side-item" onclick="openImgLightbox(${JSON.stringify(imgs)},2)">
+            <img src="${side2}" alt="${p.name}"/>
+            ${hasMore ? `<div class="card-photo-more">+${extraCount}</div>` : ''}
+          </div>` : '<div style="background:#0a0f1e;"></div>'}
+        </div>`;
+      thumbHTML = `<div class="card-photo-grid">
+        <div class="card-photo-main" onclick="openImgLightbox(${JSON.stringify(imgs)},0)">
+          <img src="${imgs[0]}" alt="${p.name}"/>
+        </div>
+        ${sideHTML}
+      </div>`;
     }
 
     let priceHTML = '';
@@ -1550,6 +1629,10 @@
     const buyStyle = isBundle ? `style="background:linear-gradient(135deg,var(--gold),#e6a000);color:#000"` : '';
     const cardStyle = isBundle ? `style="border-color:rgba(255,215,0,.25)"` : '';
     const catStyle  = isBundle ? `style="color:var(--gold)"` : '';
+
+    const photoBtnHTML = imgs.length > 0
+      ? `<button class="btn-photos" onclick="openImgLightbox(${JSON.stringify(imgs)},0)">🖼️ ${imgs.length} Foto</button>`
+      : '';
 
     return `
       <div class="product-card" data-cat="${p.cat}" data-id="${p.id}" ${cardStyle}>
@@ -1561,7 +1644,10 @@
           <div class="card-desc">${p.desc}</div>
           <div class="card-footer">
             <div class="card-price">${priceHTML}</div>
-            <button class="btn-buy" onclick="openModal('${p.name.replace(/'/g,"\\'")}','${p.price}')" ${buyStyle}>Beli</button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              ${photoBtnHTML}
+              <button class="btn-buy" onclick="openModal('${p.name.replace(/'/g,"\\'")}','${p.price}')" ${buyStyle}>Beli</button>
+            </div>
           </div>
         </div>
       </div>`;
@@ -1582,11 +1668,25 @@
   function lbPrev() { lbIdx = (lbIdx - 1 + lbImgs.length) % lbImgs.length; renderLightbox(); }
   function lbNext() { lbIdx = (lbIdx + 1) % lbImgs.length; renderLightbox(); }
   function renderLightbox() {
-    document.getElementById('lbImg').src = lbImgs[lbIdx];
+    const imgEl = document.getElementById('lbImg');
+    imgEl.style.opacity = '0';
+    setTimeout(() => { imgEl.src = lbImgs[lbIdx]; imgEl.style.opacity = '1'; }, 100);
     document.getElementById('lbCounter').textContent = `${lbIdx + 1} / ${lbImgs.length}`;
     document.getElementById('lbPrevBtn').style.display = lbImgs.length > 1 ? '' : 'none';
     document.getElementById('lbNextBtn').style.display = lbImgs.length > 1 ? '' : 'none';
+    // Render thumbnails
+    const thumbs = document.getElementById('lbThumbs');
+    thumbs.style.display = lbImgs.length > 1 ? 'flex' : 'none';
+    thumbs.innerHTML = lbImgs.map((src, i) => `
+      <img src="${src}" onclick="lbGoTo(${i})" style="
+        width:56px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0;
+        border:2px solid ${i === lbIdx ? 'var(--accent)' : 'rgba(255,255,255,.15)'};
+        opacity:${i === lbIdx ? '1' : '0.5'};
+        transition:border-color .2s,opacity .2s;
+      " onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${i===lbIdx?1:.5}'"/>
+    `).join('');
   }
+  function lbGoTo(i) { lbIdx = i; renderLightbox(); }
   document.addEventListener('keydown', e => {
     const lb = document.getElementById('imgLightbox');
     if (!lb.classList.contains('active')) return;
