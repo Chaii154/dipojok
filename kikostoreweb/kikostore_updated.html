@@ -976,6 +976,8 @@
     .btn-del-product:hover { background: rgba(255,51,85,.25); }
     .no-catalog { text-align:center;color:var(--muted);font-size:.85rem;padding:20px; }
 
+    #imgLightbox.active { display: flex !important; animation: qzFadeIn .2s ease; }
+
     /* ─── SCROLLBAR ─── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
@@ -1381,14 +1383,14 @@
             <label>Deskripsi Produk *</label>
             <textarea id="newProdDesc" placeholder="Deskripsi singkat produk ini..."></textarea>
           </div>
-          <!-- Image Upload -->
+          <!-- Multi Image Upload -->
           <div class="input-group" style="margin-top:12px;">
-            <label>Gambar Produk (opsional)</label>
+            <label>Gambar Produk · Maks 10 foto (opsional)</label>
             <div class="catalog-img-upload" onclick="document.getElementById('newProdImg').click()">
-              <input type="file" id="newProdImg" accept="image/*" style="display:none" onchange="previewCatalogImg(event)"/>
-              <div class="up-label">🖼️ Klik untuk upload gambar · <span>JPG / PNG / WEBP</span></div>
-              <img class="catalog-img-preview" id="catalogImgPreview"/>
+              <input type="file" id="newProdImg" accept="image/*" multiple style="display:none" onchange="previewCatalogImgs(event)"/>
+              <div class="up-label" id="upLabel">🖼️ Klik untuk upload foto · <span>JPG / PNG / WEBP · Bisa pilih banyak sekaligus</span></div>
             </div>
+            <div id="catalogImgPreviews" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
           </div>
           <button class="btn-add-product" onclick="addProduct()">⚡ TAMBAHKAN KE KATALOG</button>
         </div>
@@ -1402,6 +1404,17 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- IMAGE LIGHTBOX -->
+<div id="imgLightbox" style="position:fixed;inset:0;background:rgba(0,0,0,.95);backdrop-filter:blur(12px);z-index:9998;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;" onclick="closeImgLightbox()">
+  <div style="position:relative;display:flex;align-items:center;gap:16px;" onclick="event.stopPropagation()">
+    <button id="lbPrevBtn" onclick="lbPrev()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:44px;height:44px;color:#fff;font-size:1.2rem;cursor:pointer;flex-shrink:0;">‹</button>
+    <img id="lbImg" src="" style="max-width:85vw;max-height:78vh;border-radius:12px;box-shadow:0 0 60px rgba(0,212,255,.2);object-fit:contain;"/>
+    <button id="lbNextBtn" onclick="lbNext()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:44px;height:44px;color:#fff;font-size:1.2rem;cursor:pointer;flex-shrink:0;">›</button>
+  </div>
+  <div id="lbCounter" style="color:rgba(255,255,255,.5);font-size:.8rem;letter-spacing:2px;font-family:'Orbitron',sans-serif;"></div>
+  <div style="color:rgba(255,255,255,.3);font-size:.75rem;">Klik di luar foto atau tekan ESC untuk tutup · ← → untuk navigasi</div>
 </div>
 
 <!-- TOAST -->
@@ -1509,9 +1522,22 @@
     else if (p.badge === 'NEW') badgeHTML = `<span class="badge-new">NEW</span>`;
     else if (p.badge === 'BUNDLE') badgeHTML = `<span class="badge-new" style="background:var(--gold);color:#000">BUNDLE</span>`;
 
+    const imgs = p.imgs && p.imgs.length > 0 ? p.imgs : (p.img ? [p.img] : []);
     let thumbHTML = '';
-    if (p.img) {
-      thumbHTML = `<img src="${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;"/>`;
+    if (imgs.length === 1) {
+      thumbHTML = `<img src="${imgs[0]}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in;" onclick="openImgLightbox(${JSON.stringify(imgs)},0)"/>`;
+    } else if (imgs.length > 1) {
+      const visible = imgs.slice(0, 4);
+      const extra = imgs.length > 4 ? imgs.length - 4 : 0;
+      const gridCols = visible.length === 2 ? '1fr 1fr' : visible.length === 3 ? '1fr 1fr' : '1fr 1fr';
+      const cells = visible.map((src, i) => {
+        const isLast = i === 3 && extra > 0;
+        return `<div style="position:relative;overflow:hidden;background:#0a0f1e;cursor:zoom-in;" onclick="openImgLightbox(${JSON.stringify(imgs)},${i})">
+          <img src="${src}" style="width:100%;height:100%;object-fit:cover;transition:transform .3s;" onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform=''"/>
+          ${isLast ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;color:#fff;">+${extra}</div>` : ''}
+        </div>`;
+      }).join('');
+      thumbHTML = `<div style="display:grid;grid-template-columns:${gridCols};gap:2px;height:100%;">${cells}</div>`;
     } else {
       const em = p.emojis || ['🎮','🎮','🎮','🎮'];
       thumbHTML = `<div class="thumb-placeholder"><div>${em[0]}</div><div>${em[1]}</div><div>${em[2]}</div><div>${em[3]}</div></div>`;
@@ -1541,6 +1567,33 @@
       </div>`;
   }
 
+  // ─── Image Lightbox ───
+  let lbImgs = [], lbIdx = 0;
+  function openImgLightbox(imgs, idx) {
+    lbImgs = imgs; lbIdx = idx;
+    renderLightbox();
+    document.getElementById('imgLightbox').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeImgLightbox() {
+    document.getElementById('imgLightbox').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  function lbPrev() { lbIdx = (lbIdx - 1 + lbImgs.length) % lbImgs.length; renderLightbox(); }
+  function lbNext() { lbIdx = (lbIdx + 1) % lbImgs.length; renderLightbox(); }
+  function renderLightbox() {
+    document.getElementById('lbImg').src = lbImgs[lbIdx];
+    document.getElementById('lbCounter').textContent = `${lbIdx + 1} / ${lbImgs.length}`;
+    document.getElementById('lbPrevBtn').style.display = lbImgs.length > 1 ? '' : 'none';
+    document.getElementById('lbNextBtn').style.display = lbImgs.length > 1 ? '' : 'none';
+  }
+  document.addEventListener('keydown', e => {
+    const lb = document.getElementById('imgLightbox');
+    if (!lb.classList.contains('active')) return;
+    if (e.key === 'ArrowLeft') lbPrev();
+    if (e.key === 'ArrowRight') lbNext();
+  });
+
   // ─── QRIS Zoom ───
   function openQrisZoom(frame) {
     const src = frame.querySelector('img').src;
@@ -1552,7 +1605,7 @@
     document.getElementById('qrisZoom').classList.remove('active');
     document.body.style.overflow = '';
   }
-  document.addEventListener('keydown', e => { if(e.key==='Escape') closeQrisZoom(); });
+  document.addEventListener('keydown', e => { if(e.key==='Escape') { closeQrisZoom(); closeImgLightbox(); } });
 
   // ─── Custom cursor ───
   const cursor = document.getElementById('cursor');
@@ -1766,19 +1819,35 @@
     `).join('');
   }
 
-  // ─── Catalog: Preview image ───
-  let catalogImgBase64 = '';
-  function previewCatalogImg(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      catalogImgBase64 = e.target.result;
-      const preview = document.getElementById('catalogImgPreview');
-      preview.src = e.target.result;
-      preview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+  // ─── Catalog: Preview multiple images ───
+  let catalogImgsBase64 = [];
+  function previewCatalogImgs(event) {
+    const files = Array.from(event.target.files).slice(0, 10);
+    catalogImgsBase64 = [];
+    const container = document.getElementById('catalogImgPreviews');
+    const label = document.getElementById('upLabel');
+    container.innerHTML = '';
+    let loaded = 0;
+    files.forEach((file, i) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        catalogImgsBase64[i] = e.target.result;
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:relative;width:72px;height:72px;';
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--border);';
+        const del = document.createElement('button');
+        del.textContent = '✕';
+        del.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(255,51,85,.85);border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;';
+        del.onclick = () => { catalogImgsBase64.splice(i, 1); wrap.remove(); label.textContent = `🖼️ ${catalogImgsBase64.length} foto dipilih`; };
+        wrap.appendChild(img); wrap.appendChild(del);
+        container.appendChild(wrap);
+        loaded++;
+        label.innerHTML = `🖼️ ${loaded} foto dipilih · <span style="color:var(--accent)">Klik untuk tambah lagi</span>`;
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   // ─── Catalog: Add Product ───
@@ -1804,7 +1873,8 @@
       id: 'c' + Date.now(),
       name, cat, sub: sub || (cat.charAt(0).toUpperCase() + cat.slice(1)),
       price, oldPrice, badge, desc,
-      img: catalogImgBase64,
+      imgs: [...catalogImgsBase64],
+      img: catalogImgsBase64[0] || '',
       emojis: ['🎮','✨','💎','🌆'],
       custom: true
     };
@@ -1826,8 +1896,9 @@
     document.getElementById('newProdDesc').value = '';
     document.getElementById('newProdBadge').value = '';
     document.getElementById('newProdImg').value = '';
-    document.getElementById('catalogImgPreview').style.display = 'none';
-    catalogImgBase64 = '';
+    document.getElementById('catalogImgPreviews').innerHTML = '';
+    document.getElementById('upLabel').innerHTML = '🖼️ Klik untuk upload foto · <span>JPG / PNG / WEBP · Bisa pilih banyak sekaligus</span>';
+    catalogImgsBase64 = [];
 
     renderProducts();
     renderCatalogList();
