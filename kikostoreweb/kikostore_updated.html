@@ -1332,12 +1332,9 @@
 
       <div class="input-group">
         <label>Username Discord Kamu *</label>
-        <input type="text" id="buyerName" placeholder="contoh: K1K0#1234"/>
-      </div>
-      <div class="input-group">
-        <label>Discord User ID / Username untuk Chat</label>
-        <input type="text" id="buyerDiscordId" placeholder="opsional: 123456789012345678 atau username Discord"/>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:4px;line-height:1.35;">Isi User ID angka agar bisa di-mention otomatis di Discord setelah admin konfirmasi.</div>
+        <input type="text" id="buyerName" placeholder="contoh: asleww atau chaiii0659" autocomplete="off"/>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:4px;line-height:1.35;">Isi username Discord yang bisa di-copy dari profil, bukan display name. Contoh benar: <b>asleww</b> atau <b>chaiii0659</b>.</div>
+        <input type="hidden" id="buyerDiscordId"/>
       </div>
       <div class="input-group">
         <label>Email (untuk terima file)</label>
@@ -1597,6 +1594,15 @@
     return /^\d{15,25}$/.test(v) ? `<@${v}>` : v;
   }
 
+  function cleanDiscordUsername(value) {
+    return String(value || '').trim().replace(/^@+/, '');
+  }
+
+  function discordCode(value) {
+    const v = String(value || '-').replace(/`/g, "'");
+    return `\`${v}\``;
+  }
+
   function buildDeliveryText(order) {
     const lines = [
       `Halo ${order.name || 'Pembeli'}, pesanan kamu sudah dikonfirmasi.`,
@@ -1653,7 +1659,7 @@
           color: 0x00ff88,
           fields: [
             { name: '👤 Pembeli', value: String(order.name || '-'), inline: true },
-            { name: '💬 Discord', value: String(order.discordId || order.name || '-'), inline: true },
+            { name: '💬 Username Discord', value: discordCode(order.discordId || order.name || '-'), inline: true },
             { name: '📧 Email', value: String(order.email || '-'), inline: false },
             { name: '📦 Produk', value: String(order.product || '-'), inline: true },
             { name: '🆔 Order ID', value: `\`${order.id || '-'}\``, inline: true },
@@ -2017,14 +2023,15 @@
 
   // ─── Confirm Payment ───
   async function confirmPayment() {
-    const name      = document.getElementById('buyerName').value.trim();
-    const discordId = document.getElementById('buyerDiscordId').value.trim();
+    const name      = cleanDiscordUsername(document.getElementById('buyerName').value);
+    const discordId = name;
     const email     = document.getElementById('buyerEmail').value.trim();
     const product   = document.getElementById('modalProduct').textContent;
     const price     = document.getElementById('modalPrice').textContent;
     const fileInput = document.getElementById('proofFile');
 
-    if (!name || !email) { alert('⚠️ Isi nama Discord dan email kamu dulu ya!'); return; }
+    if (!name || !email) { alert('⚠️ Isi username Discord dan email kamu dulu ya!'); return; }
+    if (/\s/.test(name)) { alert('⚠️ Username Discord tidak boleh ada spasi. Gunakan username yang bisa di-copy, contoh: asleww atau chaiii0659.'); return; }
     if (!fileInput.files || !fileInput.files[0]) { alert('⚠️ Upload foto bukti pembayaran dulu ya!'); return; }
 
     const btn = document.querySelector('.btn-confirm');
@@ -2080,8 +2087,8 @@
           title: '💳 PEMBAYARAN BARU MASUK!',
           color: 0x00ff88,
           fields: [
-            { name: '👤 Nama Discord', value: name, inline: true },
-            { name: '💬 Discord Chat', value: discordId || name, inline: true },
+            { name: '👤 Username Discord', value: discordCode(name), inline: true },
+            { name: '💬 Kirim Chat ke Username', value: discordCode(discordId || name), inline: true },
             { name: '📦 Produk', value: product, inline: true },
             { name: '💰 Total', value: price, inline: true },
             { name: '📧 Email', value: email, inline: false },
@@ -2103,8 +2110,8 @@
           title: '🔔 ORDER BARU — PERLU KONFIRMASI',
           color: 0xffd700,
           fields: [
-            { name: '👤 Pembeli', value: name, inline: true },
-            { name: '💬 Discord Chat', value: discordId || name, inline: true },
+            { name: '👤 Pembeli', value: discordCode(name), inline: true },
+            { name: '💬 Username Discord', value: discordCode(discordId || name), inline: true },
             { name: '📦 Produk', value: product, inline: true },
             { name: '💰 Harga', value: price, inline: true },
             { name: '📧 Email', value: email, inline: false },
@@ -2384,7 +2391,7 @@
         <div style="text-align:center;padding:20px 0;">
           <div style="font-size:3rem;margin-bottom:12px;">✅</div>
           <div style="font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--green);letter-spacing:2px;">ORDER DIKONFIRMASI!</div>
-          <div style="font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.5;">Pembeli akan otomatis mendapat akses foto/link di keranjang dalam ±10 detik. Notifikasi juga dikirim ke Discord webhook. Untuk email, klik tombol di bawah karena HTML static tidak bisa mengirim email otomatis tanpa backend.</div>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.5;">Pembeli akan otomatis mendapat akses foto/link di keranjang dalam ±10 detik. Notifikasi juga dikirim ke Discord webhook dengan username pembeli. Untuk email, klik tombol di bawah karena HTML static tidak bisa mengirim email otomatis tanpa backend.</div>
           <button onclick='openBuyerEmail(${safeOrder})' style="width:100%;margin-top:16px;padding:10px 14px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.35);border-radius:8px;color:var(--accent);font-size:.85rem;cursor:pointer;font-weight:700;">📧 Buka Email Pembeli</button>
           <button onclick='copyDiscordDeliveryMessage(${safeOrder})' style="width:100%;margin-top:8px;padding:10px 14px;background:rgba(88,101,242,.14);border:1px solid rgba(88,101,242,.35);border-radius:8px;color:#8ea0f5;font-size:.85rem;cursor:pointer;font-weight:700;">💬 Salin Pesan Discord</button>
           <button onclick="document.getElementById('confirmPageOverlay').style.display='none';document.body.style.overflow='';" style="width:100%;margin-top:8px;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.85rem;cursor:pointer;">Tutup</button>
@@ -2472,7 +2479,7 @@
           </div>
           <div class="oi-product">📦 ${escapeHTML(o.product)}</div>
           <div class="oi-email">📧 ${escapeHTML(o.email)}</div>
-          ${o.discordId ? `<div class="oi-email">💬 ${escapeHTML(o.discordId)}</div>` : ''}
+          ${o.discordId ? `<div class="oi-email">💬 Username: ${escapeHTML(o.discordId)}</div>` : ''}
           <div class="oi-email" style="color:${o.status === 'confirmed' ? 'var(--green)' : 'var(--gold)'};font-size:.72rem">${status}</div>
           <div class="oi-email" style="color:var(--muted);font-size:.72rem">🕒 ${escapeHTML(o.time || '')}</div>
           ${o.proofSrc ? `<img src="${o.proofSrc}" alt="Bukti Bayar"/>` : ''}
