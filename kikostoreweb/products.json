@@ -1,5 +1,34 @@
 [
   {
+    "id": "dc1778237815798",
+    "name": "** Shadow Elite",
+    "cat": "female",
+    "sub": "Female",
+    "price": "** Rp 20.000",
+    "oldPrice": "** Rp 25.000",
+    "badge": "",
+    "desc": "** Template build by Kiko ✨ Racikan eksklusif dengan detail premium, tampilan realistik & natural. Cocok banget buat server FiveM Roleplay kamu.",
+    "imgs": [
+      "https://cdn.discordapp.com/attachments/1502257646567428106/1502263024097165322/image.png?ex=69ff12f7&is=69fdc177&hm=d427e537015e559a6f78de5e09a0b3a62db48149bcd2ca6e37cb9832b4fa4de9&"
+    ],
+    "img": "https://cdn.discordapp.com/attachments/1502257646567428106/1502263024097165322/image.png?ex=69ff12f7&is=69fdc177&hm=d427e537015e559a6f78de5e09a0b3a62db48149bcd2ca6e37cb9832b4fa4de9&",
+    "deliveryImgs": [],
+    "deliveryLinks": [
+      "https://drive.google.com/drive/u/1/folders/1CGR_M39N8dXKIP17BtP6aWwJeXqOYhJG"
+    ],
+    "reusable": true,
+    "emojis": [
+      "🎮",
+      "✨",
+      "💎",
+      "🌆"
+    ],
+    "custom": true,
+    "fromDiscord": true,
+    "discordMsgId": "1502263024013148310",
+    "addedAt": "2026-05-08T10:56:55.798Z"
+  },
+  {
     "id": "dc1778237591022",
     "name": "*1*",
     "cat": "female",
