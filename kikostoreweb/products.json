@@ -1,5 +1,33 @@
 [
   {
+    "id": "dc1778236960797",
+    "name": "Shadow Elite",
+    "cat": "female",
+    "sub": "Female",
+    "price": "Rp 20.000",
+    "oldPrice": "",
+    "badge": "NEW",
+    "desc": "Template muka karakter premium FiveM",
+    "imgs": [
+      "https://cdn.discordapp.com/attachments/1502257646567428106/1502259436595576893/image.png?ex=69ff0fa0&is=69fdbe20&hm=0fdce288ac21825cedfb982affe7d1ba7af6345a699bafd1ee39029d8a89ccdc&",
+      "https://cdn.discordapp.com/attachments/1502257646567428106/1502259437363265656/image.png?ex=69ff0fa0&is=69fdbe20&hm=407551f951842ac7ed3bc5239d285883675c244b3b2d172dbab72a81eed84bb4&"
+    ],
+    "img": "https://cdn.discordapp.com/attachments/1502257646567428106/1502259436595576893/image.png?ex=69ff0fa0&is=69fdbe20&hm=0fdce288ac21825cedfb982affe7d1ba7af6345a699bafd1ee39029d8a89ccdc&",
+    "deliveryImgs": [],
+    "deliveryLinks": [],
+    "reusable": true,
+    "emojis": [
+      "🎮",
+      "✨",
+      "💎",
+      "🌆"
+    ],
+    "custom": true,
+    "fromDiscord": true,
+    "discordMsgId": "1502259437434441790",
+    "addedAt": "2026-05-08T10:42:40.797Z"
+  },
+  {
     "id": "c1778231734236",
     "name": "Face",
     "cat": "male",
