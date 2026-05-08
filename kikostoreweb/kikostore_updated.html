@@ -1141,14 +1141,13 @@
       <button class="filter-btn active" onclick="filterCards(this,'all')">Semua</button>
       <button class="filter-btn" onclick="filterCards(this,'female')">Female</button>
       <button class="filter-btn" onclick="filterCards(this,'male')">Male</button>
-      <button class="filter-btn" onclick="filterCards(this,'bundle')">Bundle</button>
+      <button class="filter-btn" onclick="filterCards(this,'grafik')">Grafik</button>
     </div>
 
     <div class="products-grid" id="productsGrid">
       <!-- Products rendered dynamically by JS -->
     </div>
 
-    </div>
   </div>
 </section>
 
@@ -1404,13 +1403,14 @@
       <div class="admin-tabs">
         <div class="admin-tab active" onclick="switchAdminTab('orders',this)">📋 Order Masuk</div>
         <div class="admin-tab" onclick="switchAdminTab('catalog',this)">📦 Kelola Katalog</div>
+        <div class="admin-tab" onclick="switchAdminTab('datastore',this)">🗄️ Datastore</div>
       </div>
 
       <!-- TAB: ORDERS -->
       <div class="admin-tab-content active" id="adminTabOrders">
         <h3 style="font-family:'Orbitron',sans-serif;font-size:.82rem;color:var(--accent);letter-spacing:2px;margin-bottom:16px;">📋 DAFTAR ORDER MASUK</h3>
         <div class="order-list" id="orderList"></div>
-        <button class="admin-clear-btn" onclick="clearOrders()">🗑️ Hapus Semua Order</button>
+        <button class="admin-clear-btn" onclick="clearOrders()">🗑️ Hapus Semua Order (Lokal)</button>
       </div>
 
       <!-- TAB: CATALOG -->
@@ -1429,7 +1429,7 @@
               <select id="newProdCat">
                 <option value="female">Female</option>
                 <option value="male">Male</option>
-                <option value="bundle">Bundle</option>
+                <option value="grafik">Grafik</option>
               </select>
             </div>
             <div class="input-group">
@@ -1446,7 +1446,7 @@
                 <option value="">Tidak Ada</option>
                 <option value="NEW">NEW</option>
                 <option value="SALE">SALE</option>
-                <option value="BUNDLE">BUNDLE</option>
+                <option value="GRAFIK">GRAFIK</option>
               </select>
             </div>
             <div class="input-group">
@@ -1495,6 +1495,51 @@
         </div>
 
       </div>
+
+      <!-- TAB: DATASTORE -->
+      <div class="admin-tab-content" id="adminTabDatastore">
+        <h3 style="font-family:'Orbitron',sans-serif;font-size:.82rem;color:var(--accent);letter-spacing:2px;margin-bottom:16px;">🗄️ GITHUB DATASTORE MANAGER</h3>
+
+        <!-- DB Status -->
+        <div id="dbStatus" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:.72rem;color:var(--muted);letter-spacing:2px;margin-bottom:10px;">STATUS DATABASE</div>
+          <div id="dbStatusContent" style="font-size:.82rem;color:var(--muted);">Klik "Cek Status" untuk melihat info database.</div>
+          <button onclick="checkDbStatus()" style="margin-top:10px;padding:7px 14px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);border-radius:6px;color:var(--accent);font-size:.78rem;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;">🔍 Cek Status DB</button>
+        </div>
+
+        <!-- Reset Orders -->
+        <div style="background:var(--card);border:1px solid rgba(255,215,0,.2);border-radius:10px;padding:16px;margin-bottom:14px;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:.72rem;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">📋 RESET ORDERS.JSON</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px;line-height:1.5;">Hapus semua data order dari GitHub. Aksi ini tidak bisa dibatalkan. Data order lokal di browser juga ikut dihapus.</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button onclick="exportGitHubOrders()" style="padding:8px 14px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);border-radius:6px;color:var(--accent);font-size:.78rem;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;">📥 Export Backup Orders</button>
+            <button onclick="resetGitHubOrders()" style="padding:8px 14px;background:rgba(255,51,85,.1);border:1px solid rgba(255,51,85,.3);border-radius:6px;color:var(--red);font-size:.78rem;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;">🗑️ Reset orders.json di GitHub</button>
+          </div>
+        </div>
+
+        <!-- Reset Products -->
+        <div style="background:var(--card);border:1px solid rgba(255,107,0,.2);border-radius:10px;padding:16px;margin-bottom:14px;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:.72rem;color:var(--accent2);letter-spacing:2px;margin-bottom:8px;">📦 RESET PRODUCTS.JSON</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px;line-height:1.5;">Hapus semua produk custom dari GitHub. Cache lokal juga dibersihkan setelah reset.</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button onclick="exportGitHubProducts()" style="padding:8px 14px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);border-radius:6px;color:var(--accent);font-size:.78rem;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;">📥 Export Backup Produk</button>
+            <button onclick="resetGitHubProducts()" style="padding:8px 14px;background:rgba(255,107,0,.12);border:1px solid rgba(255,107,0,.35);border-radius:6px;color:var(--accent2);font-size:.78rem;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;">🗑️ Reset products.json di GitHub</button>
+          </div>
+        </div>
+
+        <!-- Nuke All -->
+        <div style="background:rgba(255,51,85,.04);border:1px solid rgba(255,51,85,.3);border-radius:10px;padding:16px;margin-bottom:14px;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:.72rem;color:var(--red);letter-spacing:2px;margin-bottom:8px;">☢️ RESET SEMUA DATASTORE</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px;line-height:1.5;">Reset <strong style="color:var(--red)">semua</strong> data di GitHub (orders + products) sekaligus. Direkomendasikan export backup terlebih dahulu.</div>
+          <button onclick="resetAllGitHub()" style="padding:9px 18px;background:rgba(255,51,85,.15);border:1px solid rgba(255,51,85,.5);border-radius:6px;color:var(--red);font-size:.82rem;cursor:pointer;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;">☢️ RESET SEMUA DATA GITHUB</button>
+        </div>
+
+        <!-- Logout -->
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:6px;">
+          <button onclick="adminLogout()" style="padding:8px 18px;background:rgba(123,47,255,.1);border:1px solid rgba(123,47,255,.3);border-radius:6px;color:#b57fff;font-size:.8rem;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;">🔒 Logout Admin &amp; Hapus Token</button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1948,11 +1993,11 @@
   }
 
   function buildCardHTML(p) {
-    const isBundle = p.cat === 'bundle';
+    const isGrafik = p.cat === 'grafik';
     let badgeHTML = '';
     if (p.badge === 'SALE')   badgeHTML = `<span class="badge-sale">SALE</span>`;
     else if (p.badge === 'NEW') badgeHTML = `<span class="badge-new">NEW</span>`;
-    else if (p.badge === 'BUNDLE') badgeHTML = `<span class="badge-new" style="background:var(--gold);color:#000">BUNDLE</span>`;
+    else if (p.badge === 'GRAFIK') badgeHTML = `<span class="badge-new" style="background:var(--gold);color:#000">GRAFIK</span>`;
 
     const imgs = p.imgs && p.imgs.length > 0 ? p.imgs : (p.img ? [p.img] : []);
     const hasMore = imgs.length > 3;
@@ -1992,9 +2037,9 @@
     if (p.oldPrice) priceHTML = `<span class="old">${p.oldPrice}</span>`;
     priceHTML += p.price;
 
-    const buyStyle = isBundle ? `style="background:linear-gradient(135deg,var(--gold),#e6a000);color:#000"` : '';
-    const cardStyle = isBundle ? `style="border-color:rgba(255,215,0,.25)"` : '';
-    const catStyle  = isBundle ? `style="color:var(--gold)"` : '';
+    const buyStyle = isGrafik ? `style="background:linear-gradient(135deg,var(--gold),#e6a000);color:#000"` : '';
+    const cardStyle = isGrafik ? `style="border-color:rgba(255,215,0,.25)"` : '';
+    const catStyle  = isGrafik ? `style="color:var(--gold)"` : '';
 
     const photoBtnHTML = imgs.length > 0
       ? `<button class="btn-photos" onclick='openImgLightbox(${JSON.stringify(imgs)},0)'>🖼️ ${imgs.length} Foto</button>`
@@ -2212,7 +2257,7 @@
       };
       await postDiscordWebhook(WEBHOOK_ADMIN, adminPayload, [{ file, name: file.name }]);
 
-      startPolling(orderId);
+      startPolling();
       closeModal();
       showToast('✅ Bukti terkirim! Tunggu konfirmasi admin di keranjang 🛒');
     } catch (err) {
@@ -2435,11 +2480,158 @@
   function getOrders() {
     return JSON.parse(localStorage.getItem('kikoOrders') || '[]');
   }
-  function clearOrders() {
-    if (confirm('Yakin hapus semua data order?')) {
-      localStorage.removeItem('kikoOrders');
-      renderOrders();
+  async function clearOrders() {
+    if (!confirm('Yakin hapus semua data order? Ini akan menghapus orders.json di GitHub juga.')) return;
+    localStorage.removeItem('kikoOrders');
+    localStorage.removeItem('kikoMyOrders');
+    const ok = await ghWriteFile(GH_ORDERS, [], 'Reset orders via admin panel');
+    if (ok) {
+      showToast('🗑️ Semua order berhasil dihapus dari GitHub dan lokal.');
+    } else {
+      showToast('⚠️ Lokal dihapus, tapi gagal reset GitHub: ' + (lastGitHubError || 'unknown error'));
     }
+    renderOrders();
+  }
+
+  // ─── DATASTORE: Admin reset GitHub functions ───
+  async function checkDbStatus() {
+    const el = document.getElementById('dbStatusContent');
+    el.innerHTML = '⏳ Memeriksa...';
+    try {
+      const [prodRes, orderRes] = await Promise.all([
+        fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?t=${Date.now()}`, { cache: 'no-store', headers: { 'Authorization': `Bearer ${GH_TOKEN}`, 'Accept': 'application/vnd.github+json' } }),
+        fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_ORDERS}?t=${Date.now()}`, { cache: 'no-store', headers: { 'Authorization': `Bearer ${GH_TOKEN}`, 'Accept': 'application/vnd.github+json' } })
+      ]);
+
+      let prodInfo = '❌ Tidak ditemukan', orderInfo = '❌ Tidak ditemukan';
+
+      if (prodRes.ok) {
+        const d = await prodRes.json();
+        const arr = JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g,'')))));
+        const sizeKB = Math.round(d.size / 1024);
+        const sizeColor = sizeKB > 800 ? 'var(--red)' : sizeKB > 500 ? 'var(--gold)' : 'var(--green)';
+        prodInfo = `✅ ${Array.isArray(arr) ? arr.length : '?'} produk · <span style="color:${sizeColor}">${sizeKB} KB</span> / batas ~1 MB`;
+      }
+      if (orderRes.ok) {
+        const d = await orderRes.json();
+        const arr = JSON.parse(atob(d.content.replace(/\n/g,'')));
+        const sizeKB = Math.round(d.size / 1024);
+        const confirmed = Array.isArray(arr) ? arr.filter(o => o.status === 'confirmed').length : 0;
+        const pending   = Array.isArray(arr) ? arr.filter(o => o.status === 'pending').length : 0;
+        orderInfo = `✅ ${Array.isArray(arr) ? arr.length : '?'} order (${confirmed} confirmed, ${pending} pending) · ${sizeKB} KB`;
+      }
+
+      const lsProducts = loadProductsLocalCache();
+      const lsOrders   = JSON.parse(localStorage.getItem('kikoMyOrders') || '[]');
+
+      el.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:.8rem;">
+          <div>📦 <strong style="color:var(--accent2)">products.json:</strong> ${prodInfo}</div>
+          <div>📋 <strong style="color:var(--gold)">orders.json:</strong> ${orderInfo}</div>
+          <div style="margin-top:4px;color:var(--muted);font-size:.75rem;">💾 Cache lokal: ${lsProducts.length} produk · ${lsOrders.length} order browser</div>
+          <div style="color:var(--muted);font-size:.75rem;">🔗 Repo: <code style="color:var(--accent)">${GH_OWNER}/${GH_REPO}</code></div>
+        </div>`;
+    } catch(e) {
+      el.innerHTML = `<span style="color:var(--red)">❌ Gagal cek status: ${e.message || e}</span>`;
+    }
+  }
+
+  async function exportGitHubOrders() {
+    try {
+      const { data } = await ghReadFile(GH_ORDERS);
+      if (!data) { showToast('⚠️ Tidak ada data order di GitHub.'); return; }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = `kikostore-orders-backup-${Date.now()}.json`;
+      a.click(); URL.revokeObjectURL(url);
+      showToast('✅ Backup orders.json berhasil diunduh!');
+    } catch(e) { showToast('❌ Gagal export: ' + (e.message || e)); }
+  }
+
+  async function exportGitHubProducts() {
+    try {
+      const products = await getAllProducts(true);
+      if (!products.length) { showToast('⚠️ Tidak ada produk di GitHub.'); return; }
+      const blob = new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = `kikostore-products-backup-${Date.now()}.json`;
+      a.click(); URL.revokeObjectURL(url);
+      showToast('✅ Backup products.json berhasil diunduh!');
+    } catch(e) { showToast('❌ Gagal export: ' + (e.message || e)); }
+  }
+
+  async function resetGitHubOrders() {
+    if (!confirm('⚠️ Yakin reset orders.json di GitHub?\n\nSemua data order akan HILANG PERMANEN. Export backup dulu jika perlu!')) return;
+    const konfirmasi = prompt('Ketik "RESET ORDERS" untuk konfirmasi:');
+    if (konfirmasi !== 'RESET ORDERS') { showToast('❌ Reset dibatalkan.'); return; }
+    const ok = await ghWriteFile(GH_ORDERS, [], 'Reset orders.json via admin panel');
+    if (ok) {
+      localStorage.removeItem('kikoOrders');
+      localStorage.removeItem('kikoMyOrders');
+      updateCartBadge();
+      renderOrders();
+      showToast('🗑️ orders.json berhasil direset di GitHub!');
+      checkDbStatus();
+    } else {
+      showToast('❌ Gagal reset GitHub orders: ' + (lastGitHubError || 'unknown'));
+    }
+  }
+
+  async function resetGitHubProducts() {
+    if (!confirm('⚠️ Yakin reset products.json di GitHub?\n\nSemua produk custom akan HILANG PERMANEN. Export backup dulu!')) return;
+    const konfirmasi = prompt('Ketik "RESET PRODUCTS" untuk konfirmasi:');
+    if (konfirmasi !== 'RESET PRODUCTS') { showToast('❌ Reset dibatalkan.'); return; }
+    const ok = await saveProductsToGitHub([]);
+    if (ok) {
+      cachedProducts = [];
+      saveProductsLocalCache([]);
+      renderProducts();
+      renderCatalogList();
+      showToast('🗑️ products.json berhasil direset di GitHub!');
+      checkDbStatus();
+    } else {
+      showToast('❌ Gagal reset GitHub products: ' + (lastGitHubError || 'unknown'));
+    }
+  }
+
+  async function resetAllGitHub() {
+    if (!confirm('☢️ RESET SEMUA DATA GITHUB?\n\nIni akan menghapus orders.json DAN products.json secara permanen.\n\nPastikan sudah export backup!')) return;
+    const konfirmasi = prompt('Ketik "RESET ALL" untuk konfirmasi:');
+    if (konfirmasi !== 'RESET ALL') { showToast('❌ Reset dibatalkan.'); return; }
+
+    const [okOrders, okProducts] = await Promise.all([
+      ghWriteFile(GH_ORDERS, [], 'Reset ALL — orders.json via admin panel'),
+      saveProductsToGitHub([])
+    ]);
+
+    cachedProducts = [];
+    saveProductsLocalCache([]);
+    localStorage.removeItem('kikoOrders');
+    localStorage.removeItem('kikoMyOrders');
+    updateCartBadge();
+    renderProducts();
+    renderCatalogList();
+    renderOrders();
+
+    if (okOrders && okProducts) {
+      showToast('☢️ Semua datastore GitHub berhasil direset!');
+    } else {
+      showToast(`⚠️ Parsial: orders=${okOrders ? '✅' : '❌'} products=${okProducts ? '✅' : '❌'}`);
+    }
+    checkDbStatus();
+  }
+
+  function adminLogout() {
+    GH_TOKEN = '';
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('adminLoginForm').style.display = 'block';
+    document.getElementById('adminId').value    = '';
+    document.getElementById('adminPass').value  = '';
+    document.getElementById('adminToken').value = '';
+    document.getElementById('adminError').style.display = 'none';
+    showToast('🔒 Logout berhasil. Token dihapus dari memori.');
   }
 
   // ─── CONFIRM PAGE (admin clicks link from Discord) ───
@@ -2607,6 +2799,7 @@
     document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
     document.getElementById('adminTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    if (tab === 'datastore') checkDbStatus();
   }
 
   // ─── Render Orders ───
