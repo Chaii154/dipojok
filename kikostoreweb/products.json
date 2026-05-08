@@ -1,5 +1,36 @@
 [
   {
+    "id": "dc1778258577785",
+    "name": "12",
+    "cat": "male",
+    "sub": "Male",
+    "price": "Rp 30.000",
+    "oldPrice": "Rp 40.000",
+    "badge": "SALE",
+    "desc": "Template build by Kiko ✨ Racikan eksklusif dengan detail premium, tampilan realistik & natural. Cocok banget buat server FiveM Roleplay kamu.",
+    "imgs": [
+      "https://cdn.discordapp.com/attachments/1502257646567428106/1502350104579936410/FiveM_GTAProcess_2025-08-06_12-14-28_370.png?ex=69ff6411&is=69fe1291&hm=a35da8cfb87cff2a6b375f2fc782dc4f7060a409860ecf510ea708c7a8bc9b5e&",
+      "https://cdn.discordapp.com/attachments/1502257646567428106/1502350105074728980/FiveM_GTAProcess_2025-08-06_12-14-10_632.png?ex=69ff6411&is=69fe1291&hm=30e1ab1835939985b054ee2baf3d405e92f4fc9005bef81edc886730be309525&",
+      "https://cdn.discordapp.com/attachments/1502257646567428106/1502350105582375047/FiveM_GTAProcess_2025-08-06_12-14-40_989.png?ex=69ff6411&is=69fe1291&hm=8d3d6ef3d7dd169a0ae82c05fde2ba6fd755a52ab7f4df168c0b5e1a90c1165b&"
+    ],
+    "img": "https://cdn.discordapp.com/attachments/1502257646567428106/1502350104579936410/FiveM_GTAProcess_2025-08-06_12-14-28_370.png?ex=69ff6411&is=69fe1291&hm=a35da8cfb87cff2a6b375f2fc782dc4f7060a409860ecf510ea708c7a8bc9b5e&",
+    "deliveryImgs": [],
+    "deliveryLinks": [
+      "https://drive.google.com/drive/u/1/folders/1bVxKvMYCUWLaly8yvQbrgoVZM-yOlBEH"
+    ],
+    "reusable": true,
+    "emojis": [
+      "🎮",
+      "✨",
+      "💎",
+      "🌆"
+    ],
+    "custom": true,
+    "fromDiscord": true,
+    "discordMsgId": "1502350104085139507",
+    "addedAt": "2026-05-08T16:42:57.785Z"
+  },
+  {
     "id": "dc1778258513713",
     "name": "11",
     "cat": "male",
