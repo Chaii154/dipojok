@@ -1,5 +1,32 @@
 [
   {
+    "id": "dc1778239342982",
+    "name": "3",
+    "cat": "grafik",
+    "sub": "Grafik",
+    "price": "Rp 302.000",
+    "oldPrice": "Rp 405.000",
+    "badge": "SALE",
+    "desc": "Template build by Kiko ✨ Racikan eksklusif dengan detail premium, tampilan realistik & natural. Cocok banget buat server FiveM Roleplay kamu.",
+    "imgs": [],
+    "img": "",
+    "deliveryImgs": [],
+    "deliveryLinks": [
+      "https://drive.google.com/drive/u/1/folders/1lCZC85GPF7tKMT2ESK-ok4QuM78I-D9l"
+    ],
+    "reusable": true,
+    "emojis": [
+      "🎮",
+      "✨",
+      "💎",
+      "🌆"
+    ],
+    "custom": true,
+    "fromDiscord": true,
+    "discordMsgId": "1502269429864464484",
+    "addedAt": "2026-05-08T11:22:22.982Z"
+  },
+  {
     "id": "dc1778239133849",
     "name": "3",
     "cat": "female",
