@@ -1,5 +1,36 @@
 [
   {
+    "id": "dc1778257540054",
+    "name": "4",
+    "cat": "female",
+    "sub": "Female",
+    "price": "Rp 30.000",
+    "oldPrice": "Rp 40.000",
+    "badge": "SALE",
+    "desc": "Template build by Kiko ✨ Racikan eksklusif dengan detail premium, tampilan realistik & natural. Cocok banget buat server FiveM Roleplay kamu.",
+    "imgs": [
+      "https://cdn.discordapp.com/attachments/1502257646567428106/1502345751953543238/image.png?ex=69ff6003&is=69fe0e83&hm=0f74c7b7f09ce8133a0f7a5d4be41ccedf65fb2b17e54f975f36a7d155224847&",
+      "https://cdn.discordapp.com/attachments/1502257646567428106/1502345752247271524/image.png?ex=69ff6003&is=69fe0e83&hm=c347a5847881b32699e874db0062149aefbbd9594bfa29d11ea6f278cc2b99ec&",
+      "https://cdn.discordapp.com/attachments/1502257646567428106/1502345752784015360/image.png?ex=69ff6003&is=69fe0e83&hm=410f70acaf9ed52391b13932df5fa18e7f857173694451611491eafbdd3e2a90&"
+    ],
+    "img": "https://cdn.discordapp.com/attachments/1502257646567428106/1502345751953543238/image.png?ex=69ff6003&is=69fe0e83&hm=0f74c7b7f09ce8133a0f7a5d4be41ccedf65fb2b17e54f975f36a7d155224847&",
+    "deliveryImgs": [],
+    "deliveryLinks": [
+      "https://drive.google.com/drive/u/1/folders/1nxR6rILU_6KIUtzwNZAuz8_LL_kpfGsK"
+    ],
+    "reusable": true,
+    "emojis": [
+      "🎮",
+      "✨",
+      "💎",
+      "🌆"
+    ],
+    "custom": true,
+    "fromDiscord": true,
+    "discordMsgId": "1502345751739629618",
+    "addedAt": "2026-05-08T16:25:40.054Z"
+  },
+  {
     "id": "dc1778239133849",
     "name": "3",
     "cat": "female",
