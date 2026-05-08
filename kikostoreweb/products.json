@@ -1,5 +1,32 @@
 [
   {
+    "id": "dc1778237591022",
+    "name": "*1*",
+    "cat": "female",
+    "sub": "Female",
+    "price": "** Rp 35.000",
+    "oldPrice": "** Rp 40.000",
+    "badge": "",
+    "desc": "** Template build by Kiko ✨ Racikan eksklusif dengan detail premium, tampilan realistik & natural. Cocok banget buat server FiveM Roleplay kamu.",
+    "imgs": [],
+    "img": "",
+    "deliveryImgs": [],
+    "deliveryLinks": [
+      "https://drive.google.com/drive/u/1/folders/1CGR_M39N8dXKIP17BtP6aWwJeXqOYhJG*"
+    ],
+    "reusable": true,
+    "emojis": [
+      "🎮",
+      "✨",
+      "💎",
+      "🌆"
+    ],
+    "custom": true,
+    "fromDiscord": true,
+    "discordMsgId": "1502262081657897003",
+    "addedAt": "2026-05-08T10:53:11.022Z"
+  },
+  {
     "id": "c1778231734236",
     "name": "Face",
     "cat": "male",
