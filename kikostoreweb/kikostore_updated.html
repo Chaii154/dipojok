@@ -4,6 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>KIKOSTORE — Template & Grafik FiveM</title>
+  <!-- Open Graph — Preview Discord/WhatsApp/Twitter -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://chaii154.github.io/dipojok/kikostoreweb/kikostore_updated.html"/>
+  <meta property="og:title" content="KIKOSTORE — Template & Grafik FiveM"/>
+  <meta property="og:description" content="Template muka karakter & grafik premium untuk FiveM Roleplay. Kualitas tinggi, tampilan realistik, harga terjangkau."/>
+  <meta property="og:image" content="https://chaii154.github.io/dipojok/kikostoreweb/preview.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="KIKOSTORE — Template & Grafik FiveM"/>
+  <meta name="twitter:description" content="Template muka karakter & grafik premium untuk FiveM Roleplay."/>
+  <meta name="twitter:image" content="https://chaii154.github.io/dipojok/kikostoreweb/preview.png"/>
+
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
   <style>
     :root {
@@ -371,29 +384,26 @@
       height: 100%;
     }
     .card-photo-main {
-      position: relative;
-      overflow: hidden;
-      cursor: zoom-in;
+      position: relative; overflow: hidden;
+      cursor: zoom-in; height: 100%;
     }
     .card-photo-main img {
       width: 100%; height: 100%;
-      object-fit: cover;
+      object-fit: cover; object-position: center top;
       transition: transform .4s;
     }
     .product-card:hover .card-photo-main img { transform: scale(1.05); }
     .card-photo-side {
-      display: grid;
-      grid-template-rows: 1fr 1fr;
-      gap: 2px;
+      display: grid; grid-template-rows: 1fr 1fr;
+      gap: 2px; height: 100%;
     }
     .card-photo-side-item {
-      position: relative;
-      overflow: hidden;
-      cursor: zoom-in;
+      position: relative; overflow: hidden;
+      cursor: zoom-in; min-height: 0;
     }
     .card-photo-side-item img {
       width: 100%; height: 100%;
-      object-fit: cover;
+      object-fit: cover; object-position: center top;
       transition: transform .3s;
     }
     .card-photo-side-item:hover img { transform: scale(1.08); }
@@ -1043,6 +1053,70 @@
     .btn-del-product:hover { background: rgba(255,51,85,.25); }
     .no-catalog { text-align:center;color:var(--muted);font-size:.85rem;padding:20px; }
 
+
+    /* PIN BADGE */
+    .badge-pin {
+      position: absolute; top: 10px; left: 10px; z-index: 10;
+      background: rgba(0,0,0,.75); border: 1px solid rgba(255,255,255,.2);
+      border-radius: 50%; width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; backdrop-filter: blur(4px);
+    }
+    /* BASE SELLER TAG */
+    .tag-base-seller {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: linear-gradient(135deg,#ff6b00,#ff3355);
+      color: #fff; font-size: .62rem; font-family: 'Orbitron',sans-serif;
+      font-weight: 700; letter-spacing: 1px;
+      padding: 2px 7px; border-radius: 20px; margin-left: 5px;
+      vertical-align: middle; white-space: nowrap;
+    }
+    /* LINK PREVIEW */
+    .card-link-preview {
+      margin: 6px 0 2px; border: 1px solid var(--border); border-radius: 7px;
+      overflow: hidden; display: flex; background: rgba(255,255,255,.03);
+      cursor: pointer; transition: border-color .2s; text-decoration: none;
+    }
+    .card-link-preview:hover { border-color: var(--accent); }
+    .card-link-preview-thumb { width: 68px; flex-shrink: 0; overflow: hidden; }
+    .card-link-preview-thumb img { width:100%;height:100%;object-fit:cover;display:block; }
+    .card-link-preview-info { padding: 7px 10px; flex: 1; min-width: 0; }
+    .card-link-preview-site { font-size: .65rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+    .card-link-preview-title { font-size: .75rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+    /* EDIT MODAL */
+    #editModal {
+      display: none; position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,.85); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    #editModal.active { display: flex; }
+    .edit-modal-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px; width: 100%; max-width: 520px;
+      max-height: 88vh; overflow-y: auto;
+    }
+    .edit-modal-box h3 { font-family: 'Orbitron',sans-serif; font-size: .82rem; color: var(--accent); letter-spacing: 2px; margin-bottom: 18px; }
+    .edit-field { margin-bottom: 12px; }
+    .edit-field label { display: block; font-size: .75rem; color: var(--muted); margin-bottom: 4px; }
+    .edit-field input, .edit-field select, .edit-field textarea {
+      width: 100%; background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 12px; font-family: 'Rajdhani',sans-serif;
+      font-size: .88rem; outline: none; transition: border-color .2s; box-sizing: border-box;
+    }
+    .edit-field input:focus, .edit-field select:focus, .edit-field textarea:focus { border-color: var(--accent); }
+    .edit-field textarea { resize: vertical; min-height: 60px; }
+    .edit-imgs-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .edit-img-item { position: relative; width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+    .edit-img-item img { width:100%;height:100%;object-fit:cover; }
+    .edit-img-del { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: rgba(255,51,85,.85); border: none; border-radius: 50%; color: #fff; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .edit-btn-row { display: flex; gap: 10px; margin-top: 18px; }
+    .edit-btn-save { flex: 1; padding: 10px; background: linear-gradient(135deg,var(--accent3),var(--accent)); border: none; border-radius: 8px; color: #fff; font-family: 'Orbitron',sans-serif; font-size: .75rem; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
+    .edit-btn-cancel { padding: 10px 18px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'Rajdhani',sans-serif; font-size: .88rem; cursor: pointer; }
+    .btn-edit-product { padding: 5px 10px; background: rgba(0,212,255,.08); border: 1px solid rgba(0,212,255,.3); border-radius: 6px; color: var(--accent); font-size: .78rem; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+    .btn-edit-product:hover { background: rgba(0,212,255,.2); }
+    .btn-pin-product { padding: 5px 8px; background: rgba(255,215,0,.08); border: 1px solid rgba(255,215,0,.3); border-radius: 6px; color: var(--gold); font-size: .8rem; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+    .btn-pin-product:hover { background: rgba(255,215,0,.2); }
     #imgLightbox.active { display: flex !important; animation: qzFadeIn .2s ease; }
 
     /* ─── SCROLLBAR ─── */
@@ -1954,6 +2028,16 @@
     const idx = orders.findIndex(o => o.id === orderId);
     if (idx === -1) return false;
     orders[idx].status = 'confirmed';
+    // Increment soldCount on the product
+    try {
+      const prods = await getAllProducts(true);
+      const pidx = prods.findIndex(p => p.name === orders[idx].product);
+      if (pidx !== -1) {
+        prods[pidx].soldCount = (prods[pidx].soldCount || 0) + 1;
+        if (prods[pidx].soldCount >= 10) prods[pidx].baseSeller = true;
+        await saveCustomProducts(prods);
+      }
+    } catch(e) { console.warn('soldCount update skip:', e); }
     return await ghWriteFile(GH_ORDERS, orders, `Confirm order ${orderId}`);
   }
 
@@ -1964,6 +2048,166 @@
     orders.unshift(order);
     // Try to write — needs token; if not available, skip (buyer flow)
     if (GH_TOKEN) await ghWriteFile(GH_ORDERS, orders, `New order ${order.id}`);
+  }
+
+
+  // ─── PIN PRODUCT ───
+  async function togglePin(id) {
+    const products = await getAllProducts();
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    p.pinned = !p.pinned;
+    const ok = await saveCustomProducts(products);
+    if (ok) {
+      renderProducts();
+      renderCatalogList();
+      showToast(p.pinned ? '📌 Produk dipasang pin!' : '📌 Pin dilepas.');
+    }
+  }
+
+  // ─── BASE SELLER AUTO CHECK ───
+  function autoCheckBaseSeller(products) {
+    products.forEach(p => {
+      if ((p.soldCount || 0) >= 10 && !p.baseSeller) {
+        p.baseSeller = true;
+      }
+    });
+    return products;
+  }
+
+  // ─── EDIT MODAL STATE ───
+  let _editId = null;
+  let _editImgs = [];
+  let _editDelivImgs = [];
+
+  function openEditModal(id) {
+    const p = cachedProducts.find(x => x.id === id);
+    if (!p) { showToast('Produk tidak ditemukan.'); return; }
+    _editId = id;
+    _editImgs = [...(p.imgs || (p.img ? [p.img] : []))];
+    _editDelivImgs = [...(p.deliveryImgs || [])];
+
+    document.getElementById('editName').value = p.name || '';
+    document.getElementById('editPrice').value = p.price || '';
+    document.getElementById('editOldPrice').value = p.oldPrice || '';
+    document.getElementById('editCat').value = p.cat || 'female';
+    document.getElementById('editBadge').value = p.badge || '';
+    document.getElementById('editDesc').value = p.desc || '';
+    document.getElementById('editPreviewLink').value = p.previewLink || '';
+    document.getElementById('editPinned').checked = !!p.pinned;
+    document.getElementById('editBaseSeller').checked = !!p.baseSeller;
+
+    // Render catalog images
+    renderEditImgsPreview();
+    renderEditDelivImgsPreview();
+
+    // Render delivery links
+    const linksContainer = document.getElementById('editDelivLinksContainer');
+    const links = p.deliveryLinks || [];
+    linksContainer.innerHTML = links.map((lnk, i) => `
+      <div style="display:flex;gap:8px;margin-bottom:6px;" id="editLinkRow${i}">
+        <input type="text" value="${lnk}" class="edit-deliv-link" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.88rem;outline:none;"/>
+        <button onclick="this.parentElement.remove()" style="background:rgba(255,51,85,.1);border:1px solid rgba(255,51,85,.3);border-radius:6px;color:var(--red);padding:8px 12px;cursor:pointer;">✕</button>
+      </div>`).join('') || '<div style="font-size:.78rem;color:var(--muted);padding:4px 0;">Belum ada link. Klik + Tambah Link.</div>';
+
+    document.getElementById('editModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+    document.body.style.overflow = '';
+    _editId = null; _editImgs = []; _editDelivImgs = [];
+  }
+
+  function renderEditImgsPreview() {
+    const el = document.getElementById('editImgsPreview');
+    el.innerHTML = _editImgs.map((src, i) => `
+      <div class="edit-img-item">
+        <img src="${src}" alt="img${i}"/>
+        <button class="edit-img-del" onclick="editRemoveImg(${i})">✕</button>
+      </div>`).join('');
+  }
+
+  function renderEditDelivImgsPreview() {
+    const el = document.getElementById('editDelivImgsPreview');
+    el.innerHTML = _editDelivImgs.map((src, i) => `
+      <div class="edit-img-item">
+        <img src="${src}" alt="deliv${i}"/>
+        <button class="edit-img-del" onclick="editRemoveDelivImg(${i})">✕</button>
+      </div>`).join('');
+  }
+
+  function editRemoveImg(i) { _editImgs.splice(i, 1); renderEditImgsPreview(); }
+  function editRemoveDelivImg(i) { _editDelivImgs.splice(i, 1); renderEditDelivImgsPreview(); }
+
+  function editAddImgs(input) {
+    const files = [...input.files];
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => { _editImgs.push(e.target.result); renderEditImgsPreview(); };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+  }
+
+  function editAddDelivImgs(input) {
+    const files = [...input.files];
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => { _editDelivImgs.push(e.target.result); renderEditDelivImgsPreview(); };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+  }
+
+  function editAddLinkField() {
+    const container = document.getElementById('editDelivLinksContainer');
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;';
+    div.innerHTML = `<input type="text" class="edit-deliv-link" placeholder="https://drive.google.com/..." style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.88rem;outline:none;"/>
+      <button onclick="this.parentElement.remove()" style="background:rgba(255,51,85,.1);border:1px solid rgba(255,51,85,.3);border-radius:6px;color:var(--red);padding:8px 12px;cursor:pointer;">✕</button>`;
+    container.appendChild(div);
+  }
+
+  async function saveEditModal() {
+    if (!_editId) return;
+    const products = await getAllProducts();
+    const idx = products.findIndex(p => p.id === _editId);
+    if (idx === -1) { showToast('Produk tidak ditemukan.'); return; }
+
+    const links = [...document.querySelectorAll('.edit-deliv-link')].map(i => i.value.trim()).filter(Boolean);
+
+    products[idx] = {
+      ...products[idx],
+      name: document.getElementById('editName').value.trim() || products[idx].name,
+      price: document.getElementById('editPrice').value.trim() || products[idx].price,
+      oldPrice: document.getElementById('editOldPrice').value.trim(),
+      cat: document.getElementById('editCat').value,
+      badge: document.getElementById('editBadge').value,
+      desc: document.getElementById('editDesc').value.trim(),
+      previewLink: document.getElementById('editPreviewLink').value.trim(),
+      pinned: document.getElementById('editPinned').checked,
+      baseSeller: document.getElementById('editBaseSeller').checked,
+      imgs: _editImgs,
+      img: _editImgs[0] || products[idx].img || '',
+      deliveryImgs: _editDelivImgs,
+      deliveryLinks: links,
+    };
+
+    const btn = document.querySelector('.edit-btn-save');
+    btn.textContent = '⏳ Menyimpan...'; btn.disabled = true;
+    const ok = await saveCustomProducts(products);
+    btn.textContent = '💾 SIMPAN PERUBAHAN'; btn.disabled = false;
+
+    if (ok) {
+      closeEditModal();
+      renderProducts();
+      renderCatalogList();
+      showToast('✅ Produk berhasil diupdate!');
+    } else {
+      showToast('❌ Gagal simpan ke GitHub. Cek GH_TOKEN.');
+    }
   }
 
   // ─── RENDER PRODUCTS ───
@@ -1982,7 +2226,8 @@
       </div>`;
       return;
     }
-    grid.innerHTML = all.map(p => buildCardHTML(p)).join('');
+    const sorted = [...all].sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    grid.innerHTML = sorted.map(p => buildCardHTML(p)).join('');
     // re-observe scroll animations
     document.querySelectorAll('.product-card').forEach(el => {
       el.style.opacity   = '0';
@@ -1998,6 +2243,8 @@
     if (p.badge === 'SALE')   badgeHTML = `<span class="badge-sale">SALE</span>`;
     else if (p.badge === 'NEW') badgeHTML = `<span class="badge-new">NEW</span>`;
     else if (p.badge === 'GRAFIK') badgeHTML = `<span class="badge-new" style="background:var(--gold);color:#000">GRAFIK</span>`;
+    const pinBadge = p.pinned ? `<div class="badge-pin">📌</div>` : '';
+    const baseSellerTag = p.baseSeller ? `<span class="tag-base-seller">🔥 BASE SELLER</span>` : '';
 
     const imgs = p.imgs && p.imgs.length > 0 ? p.imgs : (p.img ? [p.img] : []);
     const hasMore = imgs.length > 3;
@@ -2045,14 +2292,50 @@
       ? `<button class="btn-photos" onclick='openImgLightbox(${JSON.stringify(imgs)},0)'>🖼️ ${imgs.length} Foto</button>`
       : '';
 
+    // Link preview
+    let linkPreviewHTML = '';
+    const previewUrl = p.previewLink || (p.deliveryLinks && p.deliveryLinks[0]) || '';
+    if (previewUrl) {
+      const ytMatch = previewUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
+      if (ytMatch) {
+        const ytId = ytMatch[1];
+        linkPreviewHTML = `<a class="card-link-preview" href="${previewUrl}" target="_blank" rel="noopener">
+          <div class="card-link-preview-thumb"><img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="yt"/></div>
+          <div class="card-link-preview-info">
+            <div class="card-link-preview-site">YouTube</div>
+            <div class="card-link-preview-title">Lihat Preview Video</div>
+          </div>
+        </a>`;
+      } else if (previewUrl.match(/\.(jpg|jpeg|png|webp|gif)/i)) {
+        linkPreviewHTML = `<a class="card-link-preview" href="${previewUrl}" target="_blank" rel="noopener">
+          <div class="card-link-preview-thumb"><img src="${previewUrl}" alt="preview"/></div>
+          <div class="card-link-preview-info">
+            <div class="card-link-preview-site">Preview</div>
+            <div class="card-link-preview-title">${previewUrl.split('/').pop()}</div>
+          </div>
+        </a>`;
+      } else {
+        const domain = (() => { try { return new URL(previewUrl).hostname.replace('www.',''); } catch { return 'Link'; } })();
+        linkPreviewHTML = `<a class="card-link-preview" href="${previewUrl}" target="_blank" rel="noopener">
+          <div class="card-link-preview-thumb" style="background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🔗</div>
+          <div class="card-link-preview-info">
+            <div class="card-link-preview-site">${domain}</div>
+            <div class="card-link-preview-title">Lihat Konten</div>
+          </div>
+        </a>`;
+      }
+    }
+
     return `
       <div class="product-card" data-cat="${p.cat}" data-id="${p.id}" ${cardStyle}>
+        ${pinBadge}
         ${badgeHTML}
         <div class="card-thumb">${thumbHTML}</div>
         <div class="card-body">
           <div class="card-category" ${catStyle}>${p.sub || p.cat}</div>
-          <div class="card-title">Template "${p.name}"</div>
+          <div class="card-title">Template "${p.name}"${baseSellerTag}</div>
           <div class="card-desc">${p.desc}</div>
+          ${linkPreviewHTML}
           <div class="card-footer">
             <div class="card-price">${priceHTML}</div>
             <div style="display:flex;gap:8px;align-items:center;">
@@ -3015,17 +3298,25 @@
         ? `<img src="${p.img}" alt="${p.name}"/>`
         : `<span>${(p.emojis||['🎮'])[0]}</span>`;
       const delBtn = p.custom
-        ? `<button class="btn-del-product" onclick="deleteProduct('${p.id}')">🗑️ Hapus</button>`
+        ? `<button class="btn-del-product" onclick="deleteProduct('${p.id}')">🗑️</button>`
         : `<span style="font-size:.7rem;color:var(--muted);padding:4px 8px">Default</span>`;
+      const editBtn = `<button class="btn-edit-product" onclick="openEditModal('${p.id}')">✏️</button>`;
+      const pinBtn = `<button class="btn-pin-product" onclick="togglePin('${p.id}')" title="${p.pinned ? 'Unpin' : 'Pin'}">${p.pinned ? '📌' : '☆'}</button>`;
+      const baseSellerIndicator = p.baseSeller ? `<span style="font-size:.65rem;color:#ff6b00;font-weight:700;">🔥 BASE SELLER</span>` : '';
+      const soldInfo = p.soldCount ? `· ${p.soldCount} terjual` : '';
       return `
-        <div class="catalog-item">
+        <div class="catalog-item" style="${p.pinned ? 'border-color:rgba(255,215,0,.4)' : ''}">
           <div class="catalog-item-thumb">${thumbContent}</div>
           <div class="catalog-item-info">
-            <div class="catalog-item-name">${p.name}</div>
-            <div class="catalog-item-meta">${p.sub || p.cat} · ${p.badge || 'No Badge'} · ${(p.deliveryImgs||[]).length} foto item · ${(p.deliveryLinks||[]).length} link</div>
+            <div class="catalog-item-name">${p.name} ${p.pinned ? '📌' : ''} ${baseSellerIndicator}</div>
+            <div class="catalog-item-meta">${p.sub || p.cat} · ${p.badge || 'No Badge'} · ${(p.deliveryImgs||[]).length} foto item · ${(p.deliveryLinks||[]).length} link${soldInfo}</div>
             <div class="catalog-item-price">${p.price}${p.oldPrice ? ` <span style="color:var(--muted);text-decoration:line-through;font-size:.72rem">${p.oldPrice}</span>` : ''}</div>
           </div>
-          ${delBtn}
+          <div style="display:flex;gap:5px;flex-shrink:0;">
+            ${pinBtn}
+            ${editBtn}
+            ${delBtn}
+          </div>
         </div>`;
     }).join('');
   }
@@ -3053,5 +3344,93 @@
   resumePolling();
   checkConfirmPage();
 </script>
+
+<!-- ─── EDIT PRODUCT MODAL ─── -->
+<div id="editModal">
+  <div class="edit-modal-box">
+    <h3>✏️ EDIT PRODUK</h3>
+    <div class="edit-field">
+      <label>Nama Produk</label>
+      <input type="text" id="editName" placeholder="Nama produk"/>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="edit-field">
+        <label>Harga</label>
+        <input type="text" id="editPrice" placeholder="Rp 20.000"/>
+      </div>
+      <div class="edit-field">
+        <label>Harga Coret</label>
+        <input type="text" id="editOldPrice" placeholder="Rp 25.000"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="edit-field">
+        <label>Kategori</label>
+        <select id="editCat">
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+          <option value="grafik">Grafik</option>
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>Badge</label>
+        <select id="editBadge">
+          <option value="">Tidak Ada</option>
+          <option value="NEW">NEW</option>
+          <option value="SALE">SALE</option>
+          <option value="GRAFIK">GRAFIK</option>
+        </select>
+      </div>
+    </div>
+    <div class="edit-field">
+      <label>Deskripsi</label>
+      <textarea id="editDesc" rows="3"></textarea>
+    </div>
+    <!-- Foto Katalog -->
+    <div class="edit-field">
+      <label>📷 Foto Katalog (tampilan di website)</label>
+      <div class="edit-imgs-preview" id="editImgsPreview"></div>
+      <div style="margin-top:8px;position:relative;border:2px dashed var(--border);border-radius:6px;padding:10px;text-align:center;cursor:pointer;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <input type="file" accept="image/*" multiple id="editImgUpload" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="editAddImgs(this)"/>
+        <span style="font-size:.78rem;color:var(--muted);">🖼️ Tambah foto katalog</span>
+      </div>
+    </div>
+    <!-- Foto Delivery -->
+    <div class="edit-field">
+      <label>📦 Foto Item untuk Customer (diterima setelah beli)</label>
+      <div class="edit-imgs-preview" id="editDelivImgsPreview"></div>
+      <div style="margin-top:8px;position:relative;border:2px dashed var(--border);border-radius:6px;padding:10px;text-align:center;cursor:pointer;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <input type="file" accept="image/*" multiple id="editDelivImgUpload" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="editAddDelivImgs(this)"/>
+        <span style="font-size:.78rem;color:var(--muted);">📁 Tambah foto untuk customer</span>
+      </div>
+    </div>
+    <!-- Link Delivery -->
+    <div class="edit-field">
+      <label>🔗 Link untuk Customer (Google Drive, dll)</label>
+      <div id="editDelivLinksContainer"></div>
+      <button onclick="editAddLinkField()" style="margin-top:6px;padding:6px 12px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);border-radius:6px;color:var(--accent);font-size:.78rem;cursor:pointer;font-family:'Rajdhani',sans-serif;">+ Tambah Link</button>
+    </div>
+    <!-- Link Preview -->
+    <div class="edit-field">
+      <label>🌐 Link Preview (tampil di kartu produk, contoh: YouTube)</label>
+      <input type="text" id="editPreviewLink" placeholder="https://youtube.com/..."/>
+    </div>
+    <!-- Pin & Base Seller -->
+    <div style="display:flex;gap:12px;margin-top:4px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;color:var(--muted);">
+        <input type="checkbox" id="editPinned" style="width:16px;height:16px;accent-color:var(--gold);"/>
+        📌 Pin produk ini (tampil paling atas)
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;color:var(--muted);">
+        <input type="checkbox" id="editBaseSeller" style="width:16px;height:16px;accent-color:#ff6b00;"/>
+        🔥 Tag Base Seller
+      </label>
+    </div>
+    <div class="edit-btn-row">
+      <button class="edit-btn-cancel" onclick="closeEditModal()">Batal</button>
+      <button class="edit-btn-save" onclick="saveEditModal()">💾 SIMPAN PERUBAHAN</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
