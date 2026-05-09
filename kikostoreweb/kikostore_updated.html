@@ -376,16 +376,18 @@
     }
     .product-card:hover .card-thumb img { transform: scale(1.07); }
 
-    /* Multi-photo grid layout */
+    /* Multi-photo grid layout — kiri 1 portrait, kanan 2 stacked */
     .card-photo-grid {
       display: grid;
       grid-template-columns: 3fr 2fr;
       gap: 2px;
-      height: 100%;
+      width: 100%;
+      height: 260px;
     }
     .card-photo-main {
       position: relative; overflow: hidden;
-      cursor: zoom-in; height: 100%;
+      cursor: zoom-in;
+      width: 100%; height: 260px;
     }
     .card-photo-main img {
       width: 100%; height: 100%;
@@ -394,16 +396,17 @@
     }
     .product-card:hover .card-photo-main img { transform: scale(1.05); }
     .card-photo-side {
-      display: grid; grid-template-rows: 1fr 1fr;
-      gap: 2px; height: 100%;
+      display: flex; flex-direction: column;
+      gap: 2px; height: 260px;
     }
     .card-photo-side-item {
       position: relative; overflow: hidden;
-      cursor: zoom-in; min-height: 0;
+      cursor: zoom-in; flex: 1; min-height: 0;
     }
     .card-photo-side-item img {
       width: 100%; height: 100%;
       object-fit: cover; object-position: center top;
+      display: block;
       transition: transform .3s;
     }
     .card-photo-side-item:hover img { transform: scale(1.08); }
@@ -743,10 +746,17 @@
       background: linear-gradient(135deg, #0f172a, #1a2540);
       position: relative; overflow: hidden;
     }
+    .feature-visual-inner div img {
+      width: 100%; height: 100%; object-fit: cover;
+      object-position: center top; display: block;
+      transition: transform .4s;
+    }
+    .feature-visual-inner div:hover img { transform: scale(1.06); }
     .feature-visual-inner div::after {
       content: '';
       position: absolute; inset: 0;
       background: linear-gradient(135deg, transparent, rgba(0,212,255,.05));
+      pointer-events: none;
     }
     .feature-visual-label {
       position: absolute; bottom: 0; left: 0; right: 0;
@@ -1301,7 +1311,7 @@
         </div>
       </div>
       <div class="feature-visual">
-        <div class="feature-visual-inner">
+        <div class="feature-visual-inner" id="previewGrid">
           <div></div><div></div>
           <div></div><div></div>
         </div>
@@ -1477,6 +1487,7 @@
       <div class="admin-tabs">
         <div class="admin-tab active" onclick="switchAdminTab('orders',this)">📋 Order Masuk</div>
         <div class="admin-tab" onclick="switchAdminTab('catalog',this)">📦 Kelola Katalog</div>
+        <div class="admin-tab" onclick="switchAdminTab('preview',this)">🖼️ Preview &amp; Visitor</div>
         <div class="admin-tab" onclick="switchAdminTab('datastore',this)">🗄️ Datastore</div>
       </div>
 
@@ -1568,6 +1579,34 @@
           <div class="catalog-list" id="catalogList"></div>
         </div>
 
+      </div>
+
+      <!-- TAB: PREVIEW & VISITOR -->
+      <div class="admin-tab-content" id="adminTabPreview">
+        <h3 style="font-family:'Orbitron',sans-serif;font-size:.82rem;color:var(--accent);letter-spacing:2px;margin-bottom:16px;">🖼️ KELOLA PREVIEW TEMPLATE 2026</h3>
+
+        <!-- Visitor Stats -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:.72rem;color:var(--muted);letter-spacing:2px;margin-bottom:10px;">📊 STATISTIK VISITOR</div>
+          <div id="visitorStats" style="font-size:.85rem;color:var(--muted);">⏳ Memuat data visitor...</div>
+        </div>
+
+        <!-- Preview Photos Manager -->
+        <div style="background:var(--card);border:1px solid rgba(0,212,255,.2);border-radius:10px;padding:16px;margin-bottom:14px;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:.72rem;color:var(--accent);letter-spacing:2px;margin-bottom:12px;">🖼️ 4 FOTO PREVIEW (HOMEPAGE)</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:14px;">Foto ini tampil di section "Preview Koleksi Template 2026" di halaman utama.</div>
+
+          <div id="previewPhotoManager" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+            <!-- Rendered by JS -->
+          </div>
+
+          <div style="position:relative;border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:border-color .2s;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
+            <input type="file" accept="image/*" multiple id="previewPhotoUpload" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="handlePreviewUpload(this)"/>
+            <span style="font-size:.8rem;color:var(--muted);">🖼️ Upload foto baru (bisa pilih sampai 4 sekaligus) · JPG/PNG/WEBP</span>
+          </div>
+
+          <button onclick="savePreviewPhotos()" style="margin-top:12px;width:100%;padding:10px;background:linear-gradient(135deg,var(--accent3),var(--accent));border:none;border-radius:8px;color:#fff;font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:1px;cursor:pointer;">💾 SIMPAN FOTO PREVIEW KE GITHUB</button>
+        </div>
       </div>
 
       <!-- TAB: DATASTORE -->
@@ -2210,6 +2249,115 @@
     }
   }
 
+
+  // ─── PREVIEW PHOTOS (Homepage 2x2 Grid) ───
+  const GH_PREVIEW = 'kikostoreweb/preview.json';
+  let _previewPhotos = ['','','','']; // 4 slots
+
+  async function loadPreviewPhotos() {
+    try {
+      const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PREVIEW}?t=${Date.now()}`;
+      const res = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/vnd.github+json' } });
+      if (!res.ok) return;
+      const d = await res.json();
+      const data = JSON.parse(atob(d.content.replace(/\n/g,'')));
+      if (Array.isArray(data)) _previewPhotos = [...data, '', '', '', ''].slice(0, 4);
+    } catch(e) { console.warn('Preview load skip:', e); }
+    renderPreviewGrid();
+  }
+
+  function renderPreviewGrid() {
+    const grid = document.getElementById('previewGrid');
+    if (!grid) return;
+    grid.innerHTML = _previewPhotos.map((src, i) =>
+      src ? `<div><img src="${src}" alt="preview${i}"/></div>`
+          : `<div style="background:linear-gradient(135deg,#0f172a,#1a2540);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:rgba(0,212,255,.2);">＋</div>`
+    ).join('');
+  }
+
+  function renderPreviewPhotoManager() {
+    const el = document.getElementById('previewPhotoManager');
+    if (!el) return;
+    el.innerHTML = _previewPhotos.map((src, i) => `
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;aspect-ratio:4/3;background:var(--bg2);">
+        ${src ? `<img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="slot${i}"/>` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem;">Slot ${i+1} — Kosong</div>`}
+        <div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;">
+          <label style="cursor:pointer;background:rgba(0,0,0,.7);border:1px solid var(--accent);border-radius:5px;padding:3px 7px;font-size:.7rem;color:var(--accent);">
+            ✎<input type="file" accept="image/*" style="display:none;" onchange="replacePrevSlot(${i},this)"/>
+          </label>
+          ${src ? `<button onclick="clearPrevSlot(${i})" style="background:rgba(255,51,85,.7);border:none;border-radius:5px;padding:3px 7px;color:#fff;font-size:.7rem;cursor:pointer;">✕</button>` : ''}
+        </div>
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);padding:4px 8px;font-size:.68rem;color:var(--muted);">Slot ${i+1}</div>
+      </div>`).join('');
+  }
+
+  function clearPrevSlot(i) { _previewPhotos[i] = ''; renderPreviewPhotoManager(); renderPreviewGrid(); }
+
+  function replacePrevSlot(i, input) {
+    const file = input.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { _previewPhotos[i] = e.target.result; renderPreviewPhotoManager(); renderPreviewGrid(); };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  function handlePreviewUpload(input) {
+    const files = [...input.files].slice(0, 4);
+    files.forEach((file, fi) => {
+      const emptySlot = _previewPhotos.findIndex(s => !s);
+      const slot = emptySlot !== -1 ? emptySlot : fi;
+      if (slot > 3) return;
+      const reader = new FileReader();
+      reader.onload = e => { _previewPhotos[slot] = e.target.result; renderPreviewPhotoManager(); renderPreviewGrid(); };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+  }
+
+  async function savePreviewPhotos() {
+    if (!GH_TOKEN) { showToast('❌ Login admin dulu.'); return; }
+    const btn = document.querySelector('[onclick="savePreviewPhotos()"]');
+    if (btn) { btn.textContent = '⏳ Menyimpan...'; btn.disabled = true; }
+    const ok = await ghWriteFile(GH_PREVIEW, _previewPhotos, 'Update preview photos via admin');
+    if (btn) { btn.textContent = '💾 SIMPAN FOTO PREVIEW KE GITHUB'; btn.disabled = false; }
+    if (ok) { showToast('✅ Foto preview berhasil disimpan!'); renderPreviewGrid(); }
+    else showToast('❌ Gagal simpan ke GitHub: ' + (lastGitHubError || 'unknown'));
+  }
+
+  // ─── VISITOR COUNTER ───
+  const VISIT_NAMESPACE = 'kikostore-chaii154';
+  const VISIT_KEY = 'pageviews';
+
+  async function trackVisit() {
+    try {
+      await fetch(`https://api.counterapi.dev/v1/${VISIT_NAMESPACE}/${VISIT_KEY}/up`, { mode: 'cors' });
+    } catch(e) { /* silent */ }
+  }
+
+  async function loadVisitorStats() {
+    const el = document.getElementById('visitorStats');
+    if (!el) return;
+    try {
+      const res = await fetch(`https://api.counterapi.dev/v1/${VISIT_NAMESPACE}/${VISIT_KEY}`, { mode: 'cors' });
+      if (!res.ok) throw new Error('fetch fail');
+      const data = await res.json();
+      const count = data.count ?? data.value ?? '?';
+      el.innerHTML = `
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+          <div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:900;color:var(--accent);">${Number(count).toLocaleString('id-ID')}</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">Total Kunjungan</div>
+          </div>
+          <div style="font-size:.78rem;color:var(--muted);line-height:1.6;">
+            Data dihitung sejak counter aktif.<br/>
+            Setiap buka website = +1 kunjungan.
+          </div>
+        </div>`;
+    } catch(e) {
+      el.innerHTML = `<span style="color:var(--muted);font-size:.8rem;">Gagal memuat data visitor. Coba refresh.</span>`;
+    }
+  }
+
   // ─── RENDER PRODUCTS ───
   async function renderProducts() {
     const grid = document.getElementById('productsGrid');
@@ -2294,7 +2442,7 @@
 
     // Link preview
     let linkPreviewHTML = '';
-    const previewUrl = p.previewLink || (p.deliveryLinks && p.deliveryLinks[0]) || '';
+    const previewUrl = p.previewLink || ''; // deliveryLinks TIDAK PERNAH tampil di kartu publik
     if (previewUrl) {
       const ytMatch = previewUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
       if (ytMatch) {
@@ -3083,6 +3231,7 @@
     el.classList.add('active');
     document.getElementById('adminTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
     if (tab === 'datastore') checkDbStatus();
+    if (tab === 'preview') { renderPreviewPhotoManager(); loadVisitorStats(); }
   }
 
   // ─── Render Orders ───
@@ -3343,6 +3492,8 @@
   updateCartBadge();
   resumePolling();
   checkConfirmPage();
+  trackVisit();
+  loadPreviewPhotos();
 </script>
 
 <!-- ─── EDIT PRODUCT MODAL ─── -->
