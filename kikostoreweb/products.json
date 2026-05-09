@@ -154,7 +154,9 @@
     "fromDiscord": true,
     "discordMsgId": "1502350950000758875",
     "addedAt": "2026-05-08T16:46:19.520Z",
-    "pinned": true
+    "pinned": true,
+    "previewLink": "",
+    "baseSeller": true
   },
   {
     "id": "dc1778258653974",
