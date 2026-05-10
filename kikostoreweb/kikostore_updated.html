@@ -2257,12 +2257,14 @@
   async function loadPreviewPhotos() {
     try {
       const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PREVIEW}?t=${Date.now()}`;
-      const res = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/vnd.github+json' } });
-      if (!res.ok) return;
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(url, { cache: 'no-store', signal: controller.signal, headers: { 'Accept': 'application/vnd.github+json' } });
+      if (!res.ok) { renderPreviewGrid(); return; }
       const d = await res.json();
       const data = JSON.parse(atob(d.content.replace(/\n/g,'')));
       if (Array.isArray(data)) _previewPhotos = [...data, '', '', '', ''].slice(0, 4);
-    } catch(e) { console.warn('Preview load skip:', e); }
+    } catch(e) { /* silent - normal saat offline/preview lokal */ }
     renderPreviewGrid();
   }
 
@@ -2296,21 +2298,38 @@
   function replacePrevSlot(i, input) {
     const file = input.files[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = e => { _previewPhotos[i] = e.target.result; renderPreviewPhotoManager(); renderPreviewGrid(); };
+    reader.onload = e => {
+      openCropModal(e.target.result, i, (slot, cropped) => {
+        _previewPhotos[slot] = cropped;
+        renderPreviewPhotoManager();
+        renderPreviewGrid();
+      });
+    };
     reader.readAsDataURL(file);
     input.value = '';
   }
 
   function handlePreviewUpload(input) {
     const files = [...input.files].slice(0, 4);
-    files.forEach((file, fi) => {
+    let fileIdx = 0;
+    function processNext() {
+      if (fileIdx >= files.length) return;
+      const file = files[fileIdx++];
       const emptySlot = _previewPhotos.findIndex(s => !s);
-      const slot = emptySlot !== -1 ? emptySlot : fi;
+      const slot = emptySlot !== -1 ? emptySlot : fileIdx - 1;
       if (slot > 3) return;
       const reader = new FileReader();
-      reader.onload = e => { _previewPhotos[slot] = e.target.result; renderPreviewPhotoManager(); renderPreviewGrid(); };
+      reader.onload = e => {
+        openCropModal(e.target.result, slot, (s, cropped) => {
+          _previewPhotos[s] = cropped;
+          renderPreviewPhotoManager();
+          renderPreviewGrid();
+          processNext();
+        });
+      };
       reader.readAsDataURL(file);
-    });
+    }
+    processNext();
     input.value = '';
   }
 
@@ -2322,6 +2341,102 @@
     if (btn) { btn.textContent = '💾 SIMPAN FOTO PREVIEW KE GITHUB'; btn.disabled = false; }
     if (ok) { showToast('✅ Foto preview berhasil disimpan!'); renderPreviewGrid(); }
     else showToast('❌ Gagal simpan ke GitHub: ' + (lastGitHubError || 'unknown'));
+  }
+
+
+  // ─── CROP MODAL ───
+  let _cropSlot = null;
+  let _cropCallback = null;
+  let _cropDragging = false;
+  let _cropDragStart = {x:0,y:0};
+
+  function openCropModal(src, slot, callback) {
+    _cropSlot = slot;
+    _cropCallback = callback;
+    const img = document.getElementById('cropSourceImg');
+    img.src = src;
+    img.style.transform = 'scale(1) translate(0px, 0px)';
+    document.getElementById('cropZoom').value = 100;
+    document.getElementById('cropPosX').value = 0;
+    document.getElementById('cropPosY').value = 0;
+    document.getElementById('cropZoomVal').textContent = '100%';
+    document.getElementById('cropPosXVal').textContent = '0';
+    document.getElementById('cropPosYVal').textContent = '0';
+    document.getElementById('cropSelection').style.display = 'none';
+    document.getElementById('cropModal').classList.add('active');
+  }
+
+  function closeCropModal() {
+    document.getElementById('cropModal').classList.remove('active');
+    _cropSlot = null; _cropCallback = null;
+  }
+
+  function applyCropZoom(val) {
+    document.getElementById('cropZoomVal').textContent = val + '%';
+    applyCropPos();
+  }
+
+  function applyCropPos() {
+    const zoom = document.getElementById('cropZoom').value;
+    const px = document.getElementById('cropPosX').value;
+    const py = document.getElementById('cropPosY').value;
+    document.getElementById('cropPosXVal').textContent = px;
+    document.getElementById('cropPosYVal').textContent = py;
+    document.getElementById('cropSourceImg').style.transform =
+      `scale(${zoom/100}) translate(${px}px, ${py}px)`;
+  }
+
+  function cropStartDrag(e) {
+    _cropDragging = true;
+    const touch = e.touches ? e.touches[0] : e;
+    _cropDragStart = { x: touch.clientX, y: touch.clientY,
+      px: parseInt(document.getElementById('cropPosX').value),
+      py: parseInt(document.getElementById('cropPosY').value) };
+    e.preventDefault();
+  }
+  function cropMoveDrag(e) {
+    if (!_cropDragging) return;
+    const touch = e.touches ? e.touches[0] : e;
+    const dx = touch.clientX - _cropDragStart.x;
+    const dy = touch.clientY - _cropDragStart.y;
+    const newPx = Math.max(-100, Math.min(100, _cropDragStart.px + dx * 0.5));
+    const newPy = Math.max(-100, Math.min(100, _cropDragStart.py + dy * 0.5));
+    document.getElementById('cropPosX').value = newPx;
+    document.getElementById('cropPosY').value = newPy;
+    applyCropPos();
+    e.preventDefault();
+  }
+  function cropEndDrag(e) { _cropDragging = false; }
+
+  function applyCrop() {
+    const img = document.getElementById('cropSourceImg');
+    const wrap = document.getElementById('cropWrap');
+    const wrapRect = wrap.getBoundingClientRect();
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 600; canvas.height = 450; // 4:3
+    const ctx = canvas.getContext('2d');
+
+    const zoom = parseFloat(document.getElementById('cropZoom').value) / 100;
+    const px = parseFloat(document.getElementById('cropPosX').value);
+    const py = parseFloat(document.getElementById('cropPosY').value);
+
+    const naturalW = img.naturalWidth;
+    const naturalH = img.naturalHeight;
+    const scaleX = naturalW / wrapRect.width;
+    const scaleY = naturalH / wrapRect.height;
+
+    // Draw with transform applied
+    ctx.save();
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.scale(zoom, zoom);
+    ctx.translate(px * scaleX * 0.5, py * scaleY * 0.5);
+    ctx.drawImage(img, -naturalW/2, -naturalH/2, naturalW, naturalH);
+    ctx.restore();
+
+    const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    if (_cropCallback) _cropCallback(_cropSlot, croppedDataUrl);
+    closeCropModal();
   }
 
   // ─── VISITOR COUNTER ───
@@ -3496,6 +3611,42 @@
   loadPreviewPhotos();
 </script>
 
+
+<!-- CROP MODAL -->
+<div id="cropModal">
+  <div class="crop-modal-box">
+    <h3>✂️ CROP & ATUR FOTO</h3>
+    <div style="font-size:.78rem;color:var(--muted);">Drag untuk pilih area crop. Atur zoom dan posisi.</div>
+    <div class="crop-canvas-wrap" id="cropWrap"
+      onmousedown="cropStartDrag(event)"
+      onmousemove="cropMoveDrag(event)"
+      onmouseup="cropEndDrag(event)"
+      ontouchstart="cropStartDrag(event)"
+      ontouchmove="cropMoveDrag(event)"
+      ontouchend="cropEndDrag(event)">
+      <img id="cropSourceImg" alt="crop source"/>
+      <div id="cropSelection" style="display:none;"></div>
+    </div>
+    <div class="crop-controls">
+      <label>🔍 Zoom
+        <input type="range" id="cropZoom" min="100" max="300" value="100" oninput="applyCropZoom(this.value)"/>
+        <span id="cropZoomVal">100%</span>
+      </label>
+      <label>↔ Posisi X
+        <input type="range" id="cropPosX" min="-100" max="100" value="0" oninput="applyCropPos()"/>
+        <span id="cropPosXVal">0</span>
+      </label>
+      <label>↕ Posisi Y
+        <input type="range" id="cropPosY" min="-100" max="100" value="0" oninput="applyCropPos()"/>
+        <span id="cropPosYVal">0</span>
+      </label>
+    </div>
+    <div class="crop-btn-row">
+      <button class="crop-btn-cancel" onclick="closeCropModal()">Batal</button>
+      <button class="crop-btn-apply" onclick="applyCrop()">✂️ TERAPKAN CROP</button>
+    </div>
+  </div>
+</div>
 <!-- ─── EDIT PRODUCT MODAL ─── -->
 <div id="editModal">
   <div class="edit-modal-box">
