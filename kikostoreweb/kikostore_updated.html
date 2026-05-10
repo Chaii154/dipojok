@@ -1127,6 +1127,34 @@
     .btn-edit-product:hover { background: rgba(0,212,255,.2); }
     .btn-pin-product { padding: 5px 8px; background: rgba(255,215,0,.08); border: 1px solid rgba(255,215,0,.3); border-radius: 6px; color: var(--gold); font-size: .8rem; cursor: pointer; transition: background .2s; flex-shrink: 0; }
     .btn-pin-product:hover { background: rgba(255,215,0,.2); }
+
+    /* ─── CROP MODAL ─── */
+    #cropModal {
+      display: none; position: fixed; inset: 0; z-index: 99999 !important;
+      background: rgba(0,0,0,.95); backdrop-filter: blur(10px);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    #cropModal.active { display: flex !important; }
+    .crop-modal-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px; width: 100%;
+      max-width: 480px; display: flex; flex-direction: column; gap: 14px;
+    }
+    .crop-modal-box h3 { font-family:'Orbitron',sans-serif; font-size:.8rem; color:var(--accent); letter-spacing:2px; margin:0; }
+    .crop-canvas-wrap {
+      position: relative; width: 100%; aspect-ratio: 4/3;
+      background: #000; border-radius: 8px; overflow: hidden;
+      cursor: grab; border: 1px solid var(--border); user-select: none;
+    }
+    .crop-canvas-wrap:active { cursor: grabbing; }
+    #cropSourceImg { width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: center center; }
+    .crop-controls { display: flex; flex-direction: column; gap: 8px; }
+    .crop-controls label { font-size:.75rem; color:var(--muted); display:flex; align-items:center; gap:10px; }
+    .crop-controls input[type=range] { flex:1; accent-color:var(--accent); }
+    .crop-controls span { font-size:.72rem; color:var(--accent); min-width:36px; text-align:right; }
+    .crop-btn-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .crop-btn-apply { flex:1; padding:10px; background:linear-gradient(135deg,var(--accent3),var(--accent)); border:none; border-radius:8px; color:#fff; font-family:'Orbitron',sans-serif; font-size:.72rem; font-weight:700; cursor:pointer; min-width:120px; }
+    .crop-btn-cancel { padding:10px 14px; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--muted); font-family:'Rajdhani',sans-serif; font-size:.85rem; cursor:pointer; }
     #imgLightbox.active { display: flex !important; animation: qzFadeIn .2s ease; }
 
     /* ─── SCROLLBAR ─── */
@@ -2282,14 +2310,21 @@
     if (!el) return;
     el.innerHTML = _previewPhotos.map((src, i) => `
       <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;aspect-ratio:4/3;background:var(--bg2);">
-        ${src ? `<img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="slot${i}"/>` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem;">Slot ${i+1} — Kosong</div>`}
+        ${src
+          ? `<img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="slot${i}"/>`
+          : `<label style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--accent);font-size:1.6rem;cursor:pointer;gap:6px;">
+              🖼️
+              <span style="font-size:.72rem;color:var(--muted);">Klik untuk upload</span>
+              <input type="file" accept="image/*" style="display:none;" onchange="replacePrevSlot(${i},this)"/>
+            </label>`
+        }
         <div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;">
-          <label style="cursor:pointer;background:rgba(0,0,0,.7);border:1px solid var(--accent);border-radius:5px;padding:3px 7px;font-size:.7rem;color:var(--accent);">
-            ✎<input type="file" accept="image/*" style="display:none;" onchange="replacePrevSlot(${i},this)"/>
+          <label style="cursor:pointer;background:rgba(0,0,0,.75);border:1px solid var(--accent);border-radius:5px;padding:4px 8px;font-size:.7rem;color:var(--accent);">
+            ✎ Ganti<input type="file" accept="image/*" style="display:none;" onchange="replacePrevSlot(${i},this)"/>
           </label>
-          ${src ? `<button onclick="clearPrevSlot(${i})" style="background:rgba(255,51,85,.7);border:none;border-radius:5px;padding:3px 7px;color:#fff;font-size:.7rem;cursor:pointer;">✕</button>` : ''}
+          ${src ? `<button onclick="clearPrevSlot(${i})" style="background:rgba(255,51,85,.75);border:none;border-radius:5px;padding:4px 8px;color:#fff;font-size:.7rem;cursor:pointer;">✕</button>` : ''}
         </div>
-        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);padding:4px 8px;font-size:.68rem;color:var(--muted);">Slot ${i+1}</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.65);padding:5px 8px;font-size:.68rem;color:var(--muted);">Slot ${i+1}</div>
       </div>`).join('');
   }
 
@@ -2369,6 +2404,13 @@
   function closeCropModal() {
     document.getElementById('cropModal').classList.remove('active');
     _cropSlot = null; _cropCallback = null;
+  }
+
+  function skipCrop() {
+    // Langsung pakai foto asli tanpa crop
+    const src = document.getElementById('cropSourceImg').src;
+    if (_cropCallback) _cropCallback(_cropSlot, src);
+    closeCropModal();
   }
 
   function applyCropZoom(val) {
@@ -3643,7 +3685,8 @@
     </div>
     <div class="crop-btn-row">
       <button class="crop-btn-cancel" onclick="closeCropModal()">Batal</button>
-      <button class="crop-btn-apply" onclick="applyCrop()">✂️ TERAPKAN CROP</button>
+      <button onclick="skipCrop()" style="padding:10px 14px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.88rem;cursor:pointer;">⚡ Langsung Pakai</button>
+      <button class="crop-btn-apply" onclick="applyCrop()">✂️ Terapkan Crop</button>
     </div>
   </div>
 </div>
